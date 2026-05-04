@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Projects Presentation</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        @page {
+            size: 1080px 1527px;
+            margin: 0;
+        }
+
+        .slide {
+            width: 1080px;
+            height: 1527px;
+            box-sizing: border-box;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 100px;
+            position: relative;
+            background: white;
+            overflow: hidden;
+        }
+
+        .slide:last-child {
+            page-break-after: auto;
+        }
+
+        /* Decorative Elements */
+        .circle-decor-1 {
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(14, 165, 233, 0.1));
+            z-index: 0;
+        }
+
+        .circle-decor-2 {
+            position: absolute;
+            bottom: -150px;
+            left: -150px;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            z-index: 0;
+        }
+
+        .content-layer {
+            position: relative;
+            z-index: 10;
+        }
+
+        .hivelink-logo-small {
+            position: absolute;
+            top: 60px;
+            left: 100px;
+            height: 55px;
+            z-index: 20;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+            position: absolute;
+            top: 65px;
+            right: 100px;
+            padding: 12px 25px;
+            border-radius: 100px;
+            font-size: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .badge.completed {
+            background: #dcfce7;
+            color: #15803d;
+            border: 2px solid #bbf7d0;
+        }
+
+        .badge.ongoing {
+            background: #fef9c3;
+            color: #a16207;
+            border: 2px solid #fef08a;
+        }
+
+        /* Cover Slide */
+        .cover {
+            background: linear-gradient(135deg, #0ea5e9, #1e40af);
+            color: white;
+            align-items: center;
+            text-align: center;
+        }
+
+        .cover .circle-decor-1 {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cover .circle-decor-2 {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .cover h1 {
+            font-size: 85px;
+            font-weight: 800;
+            margin-bottom: 30px;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+        }
+
+        .cover p {
+            font-size: 34px;
+            font-weight: 400;
+            opacity: 0.9;
+            max-width: 880px;
+            line-height: 1.6;
+            text-align: justify;
+            /* Justified text on cover */
+        }
+
+        /* Section Slides */
+        .section-slide {
+            background: #0f172a;
+            color: #f8fafc;
+            align-items: center;
+            text-align: center;
+        }
+
+        .section-slide .circle-decor-1 {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .section-slide .circle-decor-2 {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .section-slide h2 {
+            font-size: 100px;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.1;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Project Slides */
+        .project-slide h2 {
+            font-size: 65px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .project-slide .url {
+            display: inline-block;
+            font-size: 26px;
+            font-weight: 600;
+            color: #00aced;
+            margin-bottom: 50px;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+        }
+
+        .project-slide .description {
+            font-size: 32px;
+            line-height: 1.8;
+            color: #334155;
+            font-weight: 400;
+            max-width: 880px;
+            text-align: justify;
+            /* Requested Justified text */
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 60px;
+            left: 100px;
+            font-size: 20px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Cover Slide -->
+    <div class="slide cover" style="padding: 0; background: none; justify-content: flex-start;">
+        <img src="cover_image.jpg"
+            style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;" />
+    </div>
+
+    <!-- Section: Completed Projects -->
+    <div class="slide section-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="content-layer">
+            <h2>Completed<br />Projects</h2>
+        </div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge completed">Completed</div>
+        <div class="content-layer">
+            <h2>RF Meat</h2>
+            <a class="url">https://rfmeat.com/</a>
+            <div class="description">
+                MeatChain by RF Meat Supply Chain is a specialized SaaS platform designed to give meat distributors
+                complete visibility and control over their supply networks from farm to fork. The software offers
+                essential features such as real-time cold chain temperature monitoring, GPS fleet tracking, and
+                automated warehouse inspections to ensure continuous HACCP compliance. To accommodate businesses of all
+                sizes, the service provides a scalable subscription model that ranges from a free starter package for
+                small butcher shops to comprehensive enterprise solutions.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge completed">Completed</div>
+        <div class="content-layer">
+            <h2>Clock Sure</h2>
+            <a class="url">https://clocksureai.com/</a>
+            <div class="description">
+                ClockSure is a specialized construction SaaS platform in the Philippines that enables contractors to
+                seamlessly track their crews from any location. The software utilizes modern tools like GPS geofencing
+                and AI biometric face verification to eliminate ghost employees and ensure accurate on-site attendance.
+                Additionally, ClockSure streamlines workforce management by offering precise time tracking, full audit
+                trails, and automated real-time payroll computation across flexible subscription plans.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge completed">Completed</div>
+        <div class="content-layer">
+            <h2>Skin Logiq</h2>
+            <a class="url">https://skinlogiqph.com/</a>
+            <div class="description">
+                SkinLogiQ Aesthetics is a premium beauty and skincare clinic in the Philippines that provides expert
+                treatments tailored for both men and women. Backed by certified aestheticians and years of experience,
+                the clinic specializes in a wide range of professional hair removal and waxing services, alongside
+                skin-brightening treatments and eyebrow tattooing. To ensure maximum client comfort and convenience,
+                SkinLogiQ Aesthetics utilizes the finest products and offers both flexible home service options and easy
+                appointment booking through various social messaging platforms.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge completed">Completed</div>
+        <div class="content-layer">
+            <h2>DYTI</h2>
+            <a class="url">https://dyti.lovable.app/</a>
+            <div class="description">
+                DYTI is a premium brand specializing in sustainably harvested seafood from pristine ocean waters. The
+                company offers a curated selection of fresh ocean delicacies, including top-tier shrimp, octopus, and
+                fish. Guided by the philosophy of "Perfecting the Science of Freshness," DYTI provides consumers with
+                high-quality, environmentally conscious seafood options.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge completed">Completed</div>
+        <div class="content-layer">
+            <h2>RMJ Catering</h2>
+            <a class="url">https://rmj.lovable.app/</a>
+            <div class="description">
+                The RMJ application serves as a digital management portal for RMJ Catering, featuring dedicated access
+                gateways tailored for Staff, Admin, and Client users. The platform includes built-in functionality
+                allowing users to easily scan and register their RMJ Cards to streamline transactions or access.
+                Additionally, the interface highlights several key service locations across the Philippines, including
+                major corporate hubs like KMC Armstrong in Makati, SM North in Quezon City, and the Pinnacle Axis Tower
+                in Alabang.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge completed">Completed</div>
+        <div class="content-layer">
+            <h2>YS SASE Holdings</h2>
+            <a class="url">https://yssase88.lovable.app/</a>
+            <div class="description">
+                YS Sase 88 Holdings Corporation is a professional lending institution in the Philippines dedicated to
+                empowering clients through accessible and transparent financial services. The company offers a diverse
+                portfolio of customizable loan products, including business financing, specialized packages for doctors
+                and OFWs, real estate financing ("Sangla Titulo"), and auto-collateral loans ("Sangla ORCR") covering
+                various vehicle types. To best accommodate its clients' financial journeys, YS Sase 88 provides
+                competitive low-interest rates, flexible payment terms extending up to five years, and rapid processing
+                that yields approvals within 24 to 48 hours.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <!-- Section: Ongoing Projects -->
+    <div class="slide section-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1" style="background: rgba(253,224,71,0.05)"></div>
+        <div class="circle-decor-2" style="background: rgba(234,179,8,0.1)"></div>
+        <div class="content-layer">
+            <h2
+                style="background: linear-gradient(to right, #fde047, #f59e0b); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                Ongoing<br />Projects</h2>
+        </div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge ongoing">Ongoing</div>
+        <div class="content-layer">
+            <h2>Himap Aggregator Site</h2>
+            <a class="url">https://resolutebpo.vercel.app/</a>
+            <div class="description">
+                Resolute is a comprehensive Healthcare BPO (Business Process Outsourcing) provider that delivers
+                tailored, scalable support solutions to a wide range of medical organizations. The company offers
+                specialized administrative and clinical services, including medical billing and coding, 24/7 patient
+                support desk operations, pharmacy processing, and HIPAA-compliant medical transcription. By deploying
+                highly trained and certified professionals, Resolute empowers healthcare leaders—from solo practitioners
+                to large health systems—to optimize their operational efficiency, reduce costs, and elevate the overall
+                patient experience.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge ongoing">Ongoing</div>
+        <div class="content-layer">
+            <h2>Senior Living<br />Aggregator Site</h2>
+            <a class="url">https://yssase88.com/</a>
+            <div class="description">
+                SeniorLiving PH (hosted at yssase88.com) is a dedicated online platform designed to help Filipino
+                families find trusted, vetted assisted living facilities and senior care homes across the Philippines.
+                Serving as a transparent and completely free directory for families, the service simplifies the often
+                overwhelming search process by matching users with care providers based on their specific location,
+                budget, and personalized healthcare requirements. Additionally, the platform features an innovative
+                "Family Dashboard" that allows relatives—especially those living abroad—to conveniently monitor their
+                loved one's daily health metrics and receive real-time care updates from anywhere in the world.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge ongoing">Ongoing</div>
+        <div class="content-layer">
+            <h2>Senior Living<br />Management System</h2>
+            <a class="url">https://care-system-iota.vercel.app/</a>
+            <div class="description">
+                Care System 2.0 (by Kyte) is a modern care management platform designed specifically to streamline daily
+                operations and organize patient records within assisted living facilities. The software features an
+                intuitive interface with actionable, secure checklists that sync instantly in real-time across all
+                devices, ensuring staff are always up to date on their tasks. To guarantee maximum privacy, the platform
+                also employs enterprise-grade Row Level Security, ensuring that all facility data remains strictly
+                siloed and protected.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge ongoing">Ongoing</div>
+        <div class="content-layer">
+            <h2>CCAP Vendor Platform</h2>
+            <a class="url">https://vendor-platform-two.vercel.app/</a>
+            <div class="description">
+                The Vendor Platform serves as a specialized directory and verification tool specifically designed to
+                streamline modern BPO (Business Process Outsourcing) operations. By successfully vetting suppliers,
+                contractors, and various service providers, the platform dramatically reduces logistical complexities
+                and allows BPO operators to confidently focus on scaling their business. Furthermore, the site showcases
+                an expansive and trusted network, prominently displaying its active partnerships with numerous
+                recognized CCAP (Contact Center Association of the Philippines) member companies.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+    <div class="slide project-slide">
+        <img src="hivelink_logo.jpg" class="hivelink-logo-small" alt="Hivelink I.T. Solutions" />
+        <div class="circle-decor-1"></div>
+        <div class="circle-decor-2"></div>
+        <div class="badge ongoing">Ongoing</div>
+        <div class="content-layer">
+            <h2>Bayport West<br />Naia Garden</h2>
+            <a class="url">https://bayport-two.vercel.app/</a>
+            <div class="description">
+                The Bayport West application serves as an interactive property availability dashboard specifically
+                designed for the Bayport West Waterfront Complex. The platform provides a comprehensive overview of four
+                distinct 20-floor residential buildings—Towers A, B, C, and D—which individually house 160 residential
+                units. Through an easy-to-use interface, users and administrators can click on specific towers to view
+                real-time occupancy metrics that categorize each unit as available, taken, or reserved.
+            </div>
+        </div>
+        <div class="footer">Portfolio Presentation • 2026</div>
+    </div>
+
+</body>
+
+</html>

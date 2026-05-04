@@ -1,0 +1,164 @@
+{
+  "success": true,
+  "data": {
+    "markdown": "![AIS](https://aiautomationsociety.ai/AIS-Logo.png)\n\n- [HOMEHOME](https://aiautomationsociety.ai/#)\n- [ABOUTABOUT](https://aiautomationsociety.ai/#)\n- [AWARDSAWARDS](https://aiautomationsociety.ai/#)\n- [SERVICESSERVICES](https://aiautomationsociety.ai/#)\n- [PLUSPLUS](https://aiautomationsociety.ai/#)\n- [MERCHMERCH](https://shop.aiautomationsociety.ai/shop)\n\n[Join Free](https://www.skool.com/ai-automation-society)\n\nWorld's Largest AI Automation Community\n\n# UnleashtheAISociety\n\nJoin **330,000+** innovators mastering **n8n**, **Claude Code**, and cutting-edge AI tools to build real businesses with AI.\n\n[Join Free Community](https://www.skool.com/ai-automation-society) [Explore \u2193](https://aiautomationsociety.ai/#about)\n\n330K+\n\nFree Members\n\n3.5K+\n\nPlus Members\n\n#1\n\nAI Community\n\n\u2014 About Us\n\n## Making AI Automation Accessible\n\nOur mission: to give anyone, regardless of background, a clear path from zero to implementing real AI automations that solve real-world problems.\n\n330,000+\n\nCommunity Members\n\nThe largest AI automation community in the world\n\n3,500+\n\nPlus Members\n\nAdvanced training and priority support\n\nExpert-Led\n\nFounded by Nate Herk\n\nProven expertise in AI automation\n\nn8nClaude CodeZapierMakeOpenAIAnthropicLangChainSkool\n\nn8nClaude CodeZapierMakeOpenAIAnthropicLangChainSkool\n\nn8nClaude CodeZapierMakeOpenAIAnthropicLangChainSkool\n\nn8nClaude CodeZapierMakeOpenAIAnthropicLangChainSkool\n\n\ud83c\udfc6 Proven Track Record\n\n## 4x Skool Games Winner\n\nAI Automation Society has been recognized as a top community on Skool for 4 consecutive quarters, competing against hundreds of thousands of communities worldwide and consistently ranking in the top 5.\n\n4\n\nConsecutive Quarter Wins\n\nTop 5\n\nRanking Every Quarter\n\n100K+\n\nCommunities Competing\n\n\ud83c\udfc6\n\nQ3 Skool Games \u2014 Winner\n\nFounder Nate Herk at the awards ceremony\n\n\u26a1\n\nLeaderboard \u2014 4 Quarters Running\n\nConsistent top-5 ranking against 100K+ communities\n\n\u2014 What We Offer\n\n## Everything You Need to Master AI Automation\n\nCourses & Training\n\nStructured learning paths for n8n, Claude Code, and modern AI tools \u2014 from beginner to advanced, master automation step by step.\n\nCommunity Forum\n\nConnect with 300K+ members, get help, share wins, and collaborate on projects. Never automate alone again.\n\nLive Workshops\n\nRegular expert-led sessions to keep you at the cutting edge of AI automation. Learn directly from practitioners.\n\nTools & Templates\n\nReady-to-use automation blueprints and exclusive resources. Hit the ground running with proven solutions.\n\nPlus Membership\n\n## Take Your Automation to the Next Level\n\nUpgrade to AI Automation Society Plus for advanced training, priority support, and exclusive resources. Join 3,500+ members taking their automation to the next level.\n\nAdvanced Training Paths\n\nPriority Support Channel\n\nExclusive Templates\n\nPrivate Mastermind\n\n[Join Plus Membership \u2192](https://www.skool.com/ai-automation-society-plus) [Shop Merch](https://shop.aiautomationsociety.ai/shop)\n\n![AIS](https://aiautomationsociety.ai/AIS-Logo.png)\n\n\u2014 Ready When You Are\n\nJoin the Movement\n\n330,000+ innovators are building real businesses with n8n, Claude Code, and cutting-edge AI. Your seat is free.\n\n[Join Free Community \u2192](https://www.skool.com/ai-automation-society)",
+    "screenshot": "https://storage.googleapis.com/firecrawl-scrape-media/screenshot-bb379218-7c42-4557-b2f9-9febe9000ee7.png?GoogleAccessId=scrape-bucket-accessor%40firecrawl.iam.gserviceaccount.com&Expires=1777775766&Signature=Xd27ELUVGp2RJxwGeiicqYvX8jP%2BZjvEujmkWRuiym3e2Sayoeub6wXmBOJ%2B8XO9gF9exzT2FNzqBJ%2BOp0fOU1InfZpirxHaztKYz02unhm%2BqfU%2FPdTbq7E%2BffHXOMZ6KmiMb%2F7MYy%2BN9GJVjJeysPhcmze8Cbhnm%2Bhzi08RNnhvEBV0Nzy0x4S%2B%2BNtmH0DC2oILG6psZnrRPP6G07UxYkb3WaLPgrsweRMh%2FrTTGZIwJZPFSKoBKn0G%2BZHfhmsSjB0xWLM4NuHfHlNHlVnVa3qwgMiKErFwy1fglg%2Fz7HzK8JH%2BaZlHvDNzM8nX5zNI7c35xAXsdx8%2F%2F0fabSCNlg%3D%3D",
+    "branding": {
+      "colorScheme": "dark",
+      "fonts": [
+        {
+          "family": "Roboto Mono",
+          "role": "monospace"
+        },
+        {
+          "family": "Montserrat",
+          "role": "heading"
+        },
+        {
+          "family": "Arial",
+          "role": "body"
+        }
+      ],
+      "colors": {
+        "primary": "#11384F",
+        "secondary": "#2CA9E1",
+        "accent": "#070A13",
+        "background": "#060810",
+        "textPrimary": "#060810",
+        "link": "#0A1825"
+      },
+      "typography": {
+        "fontFamilies": {
+          "primary": "Arial",
+          "heading": "Montserrat"
+        },
+        "fontStacks": {
+          "heading": [
+            "Roboto Mono",
+            "monospace"
+          ],
+          "body": [
+            "Montserrat",
+            "system-ui",
+            "sans-serif"
+          ],
+          "paragraph": [
+            "Montserrat",
+            "sans-serif"
+          ]
+        },
+        "fontSizes": {
+          "h1": "110px",
+          "h2": "72px",
+          "body": "18px"
+        }
+      },
+      "spacing": {
+        "baseUnit": 4,
+        "borderRadius": "16px"
+      },
+      "components": {
+        "buttonPrimary": {
+          "background": "#070A13",
+          "textColor": "#FFFFFF",
+          "borderRadius": "9999px",
+          "borderRadiusCorners": {
+            "topLeft": "9999px",
+            "topRight": "9999px",
+            "bottomRight": "9999px",
+            "bottomLeft": "9999px"
+          },
+          "shadow": "rgba(44, 169, 225, 0.3) 0px 0px 40px 0px"
+        },
+        "buttonSecondary": {
+          "background": "#090C14",
+          "textColor": "#F0F2F5",
+          "borderColor": "#653F20",
+          "borderRadius": "9999px",
+          "borderRadiusCorners": {
+            "topLeft": "9999px",
+            "topRight": "9999px",
+            "bottomRight": "9999px",
+            "bottomLeft": "9999px"
+          },
+          "shadow": "none"
+        }
+      },
+      "images": {
+        "logo": "https://aiautomationsociety.ai/AIS-Logo.png",
+        "favicon": "https://aiautomationsociety.ai/AIS-Logo.png",
+        "ogImage": null,
+        "logoAlt": "AIS"
+      },
+      "__llm_logo_reasoning": {
+        "selectedIndex": 0,
+        "reasoning": "Selected #0 because it matches the favicon and is the main visible logo in the header area, representing the brand 'AI Automation Society'.",
+        "confidence": 0.9,
+        "source": "llm"
+      },
+      "__llm_button_reasoning": {
+        "primary": {
+          "index": 1,
+          "text": "Join Free Community \u2192",
+          "reasoning": "Button #1 'Join Free Community \u2192' is the primary CTA due to its distinct text color (#FFFFFF) on a dark background (#070A13), making it stand out. It also uses the class 'cta-primary', indicating a primary action."
+        },
+        "secondary": {
+          "index": 4,
+          "text": "Shop Merch",
+          "reasoning": "Button #4 'Shop Merch' is selected as secondary because it has a different background color (#090C14) and uses a ghost style, making it less prominent than the primary CTA."
+        },
+        "confidence": 0.95
+      },
+      "personality": {
+        "tone": "modern",
+        "energy": "medium",
+        "targetAudience": "tech enthusiasts and professionals interested in AI automation"
+      },
+      "designSystem": {
+        "framework": "custom",
+        "componentLibrary": ""
+      },
+      "confidence": {
+        "buttons": 0.95,
+        "colors": 0.9,
+        "overall": 0.925
+      },
+      "__llm_metadata": {
+        "logoSelection": {
+          "llmCalled": true,
+          "llmSucceeded": true,
+          "finalSource": "llm",
+          "rawLogoSelection": {
+            "selectedLogoIndex": 0,
+            "selectedLogoReasoning": "Selected #0 because it matches the favicon and is the main visible logo in the header area, representing the brand 'AI Automation Society'.",
+            "confidence": 0.9
+          }
+        },
+        "buttonClassification": {
+          "llmCalled": true,
+          "llmSucceeded": true
+        }
+      }
+    },
+    "metadata": {
+      "title": "AI Automation Society \u2014 Master AI Automation",
+      "language": "en",
+      "viewport": "width=device-width, initial-scale=1.0",
+      "description": "Join 300,000+ members in the world's largest AI automation community. Learn n8n, Claude Code, and cutting-edge AI tools.",
+      "favicon": "https://aiautomationsociety.ai/AIS-Logo.png",
+      "scrapeId": "019dc7a4-d6b8-72d7-bf0c-500e0dded1f0",
+      "sourceURL": "https://aiautomationsociety.ai/",
+      "url": "https://aiautomationsociety.ai/",
+      "statusCode": 200,
+      "contentType": "text/html",
+      "timezone": "America/New_York",
+      "proxyUsed": "basic",
+      "indexId": "6ab0df65-39b7-404d-b495-23237ca5ed0a",
+      "creditsUsed": 1,
+      "concurrencyLimited": false
+    },
+    "images": [
+      "https://aiautomationsociety.ai/AIS-Logo.png"
+    ]
+  }
+}
