@@ -12,6 +12,7 @@ import {
   Mic,
   MicOff,
   Pause,
+  Play,
 } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase/client";
@@ -38,10 +39,11 @@ interface Props {
   micMuted?: boolean;
   toggleMic?: () => void;
   pause?: () => void;
+  resume?: () => void;
   setLiveAutoAdvance?: (enabled: boolean) => void;
 }
 
-export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, setLiveAutoAdvance }: Props) {
+export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, resume, setLiveAutoAdvance }: Props) {
   const demoId = useSession((s) => s.demoId);
   const sources = useSession((s) => s.sources);
   const sessionState = useSession((s) => s.state);
@@ -363,15 +365,23 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, se
                   {micMuted ? "Muted" : "Mic"}
                 </Button>
               )}
-              {pause && (
+              {(pause || resume) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={pause}
+                  onClick={sessionState === "paused" ? resume : pause}
                   className="text-white hover:bg-white/10"
-                  title="Pause AI narration"
+                  title={sessionState === "paused" ? "Resume AI narration" : "Pause AI narration"}
                 >
-                  <Pause className="h-4 w-4 mr-1" /> Pause
+                  {sessionState === "paused" ? (
+                    <>
+                      <Play className="h-4 w-4 mr-1" /> Resume
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="h-4 w-4 mr-1" /> Pause
+                    </>
+                  )}
                 </Button>
               )}
               <div className="w-px h-6 bg-gray-600 mx-1" />

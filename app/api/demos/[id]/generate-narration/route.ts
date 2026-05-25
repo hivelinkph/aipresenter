@@ -152,6 +152,12 @@ export async function POST(req: Request, { params }: Ctx) {
               temperature: 0.7,
               maxOutputTokens: 8192,
               responseMimeType: "application/json",
+              responseSchema: {
+                type: "ARRAY",
+                items: {
+                  type: "STRING",
+                },
+              },
             },
           }),
         },

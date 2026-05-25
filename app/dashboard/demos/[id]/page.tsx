@@ -294,6 +294,7 @@ export default function DemoRunner() {
               micMuted={micMuted} 
               toggleMic={toggleMic} 
               pause={pause} 
+              resume={resume}
               setLiveAutoAdvance={setLiveAutoAdvance} 
             />
           )}
