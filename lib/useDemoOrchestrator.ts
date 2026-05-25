@@ -237,6 +237,23 @@ export function useDemoOrchestrator() {
           session.setCurrentPageIndex(target - 1);
           return { ok: true, currentPage: target, total };
         }
+        case "start_presentation": {
+          session.setPresentationPhase("presentation");
+          transcript.append({
+            lane: "system",
+            text: "AI initiated PDF presentation.",
+          });
+          return { ok: true };
+        }
+        case "register_audience_member": {
+          const { name: memberName, tempId } = args as { name: string; tempId: string };
+          session.registerFace(tempId, memberName);
+          transcript.append({
+            lane: "system",
+            text: `Registered ${memberName} (ID: ${tempId}).`,
+          });
+          return { ok: true };
+        }
         default:
           throw new Error(`runClientTool: unsupported ${name}`);
       }
@@ -652,6 +669,7 @@ export function useDemoOrchestrator() {
     const session = useSession.getState();
     try {
       session.setState("starting");
+      session.setPresentationPhase("greeting");
       session.setError(null);
 
       reconnectAttemptsRef.current = 0;
@@ -813,10 +831,18 @@ export function useDemoOrchestrator() {
           `NARRATION SCRIPT (read this VERBATIM — word for word, do not paraphrase or skip):\n` +
           `${narration.trim()}`;
       } else {
-        // Freestyle mode — AI narrates from the page text
+      // Freestyle mode — AI narrates from the page text
         instruction =
           `[PAGE ${pageIndex + 1}/${total}]:\n${sanitized}\n\n` +
           `Narrate this page in the demo language. Stay grounded in the text above.`;
+      }
+
+      const session = useSession.getState();
+      const pdfBucket = session.sources.pdfs as { autoAdvance?: boolean } | undefined;
+      const isAutoAdvance = !!pdfBucket?.autoAdvance;
+
+      if (isAutoAdvance && !isLastPage) {
+        instruction += `\n\nCRITICAL INSTRUCTION: When you have finished reading this page's narration verbatim, YOU MUST IMMEDIATELY CALL THE \`next_page\` TOOL to advance the screen. DO NOT CONTINUE SPEAKING OR ASK FOR QUESTIONS UNTIL YOU HAVE CALLED THE TOOL.`;
       }
 
       // If this is the last page, append Q&A transition instruction
@@ -880,6 +906,14 @@ export function useDemoOrchestrator() {
     }
   }, []);
 
+  const sendFrame = useCallback((base64: string) => {
+    liveRef.current?.sendClientImage(base64);
+  }, []);
+
+  const sendContext = useCallback((text: string) => {
+    liveRef.current?.sendClientText(text);
+  }, []);
+
   return {
     start,
     pause,
@@ -892,6 +926,8 @@ export function useDemoOrchestrator() {
     micMuted,
     toggleMic,
     setLiveAutoAdvance,
+    sendFrame,
+    sendContext,
   };
 }
 
@@ -982,7 +1018,11 @@ function buildPdfSystemPrompt(
   const nameBlock = formatPresenterNameBlock(presenterName);
   return [
     `You are a live AI presenter walking an audience through a PDF document.`,
-    `The audience can see the current page on their screen in fullscreen mode.`,
+    `You will start in a "Webcam Greeting" phase where you can see the audience.`,
+    `Greet them, ask for their names, and use the register_audience_member tool to save names.`,
+    `When you feel the introductions are complete, you MUST call start_presentation to transition to the PDF.`,
+    ``,
+    `Once the presentation starts, the audience can see the current page on their screen in fullscreen mode.`,
     ``,
     persona.trim(),
     ``,

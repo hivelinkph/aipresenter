@@ -20,6 +20,8 @@ export type DemoLanguage = "English" | "Tagalog" | "Bisaya";
  */
 export type PresentationMode = "website" | "pdf";
 
+export type PresentationPhase = "greeting" | "presentation";
+
 interface ConnectionStatus {
   gemini: "disconnected" | "connecting" | "connected" | "error";
   agent: "disconnected" | "connecting" | "connected" | "error";
@@ -49,6 +51,11 @@ interface SessionStore {
   endedAt: number | null;
   connections: ConnectionStatus;
   lastError: string | null;
+
+  presentationPhase: PresentationPhase;
+  audienceFaces: Record<string, string>; // mapping from tempId to Name
+  setPresentationPhase: (phase: PresentationPhase) => void;
+  registerFace: (tempId: string, name: string) => void;
 
   setState: (s: SessionState) => void;
   setUserId: (id: string | null) => void;
@@ -112,6 +119,14 @@ export const useSession = create<SessionStore>((set) => ({
   endedAt: null,
   connections: { ...initialConnections },
   lastError: null,
+  presentationPhase: "greeting",
+  audienceFaces: {},
+
+  setPresentationPhase: (presentationPhase) => set({ presentationPhase }),
+  registerFace: (tempId, name) =>
+    set((prev) => ({
+      audienceFaces: { ...prev.audienceFaces, [tempId]: name },
+    })),
 
   setState: (state) => set({ state }),
   setUserId: (userId) => set({ userId }),
@@ -174,5 +189,7 @@ export const useSession = create<SessionStore>((set) => ({
       endedAt: null,
       connections: { ...initialConnections },
       lastError: null,
+      presentationPhase: "greeting",
+      audienceFaces: {},
     }),
 }));

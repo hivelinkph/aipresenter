@@ -46,6 +46,11 @@ const PdfRuntime = dynamic(
     ),
   },
 );
+
+const WebcamRuntime = dynamic(
+  () => import("@/components/runtime/WebcamRuntime").then((m) => m.WebcamRuntime),
+  { ssr: false }
+);
 import { ArrowLeft, Save } from "lucide-react";
 
 interface DemoRow {
@@ -77,8 +82,11 @@ export default function DemoRunner() {
     micMuted,
     toggleMic,
     setLiveAutoAdvance,
+    sendFrame,
+    sendContext,
   } = useDemoOrchestrator();
 
+  const presentationPhase = useSession((s) => s.presentationPhase);
   const hydrateFromDemo = useSession((s) => s.hydrateFromDemo);
   const stateDemoTitle = useSession((s) => s.demoTitle);
   const setDemoTitle = useSession((s) => s.setDemoTitle);
@@ -289,14 +297,18 @@ export default function DemoRunner() {
             </div>
           </div>
           {presentationMode === "pdf" && (
-            <PdfRuntime 
-              pushPdfPage={pushPdfPage} 
-              micMuted={micMuted} 
-              toggleMic={toggleMic} 
-              pause={pause} 
-              resume={resume}
-              setLiveAutoAdvance={setLiveAutoAdvance} 
-            />
+            presentationPhase === "greeting" ? (
+              <WebcamRuntime sendFrame={sendFrame} sendContext={sendContext} />
+            ) : (
+              <PdfRuntime 
+                pushPdfPage={pushPdfPage} 
+                micMuted={micMuted} 
+                toggleMic={toggleMic} 
+                pause={pause} 
+                resume={resume}
+                setLiveAutoAdvance={setLiveAutoAdvance} 
+              />
+            )
           )}
           <div className="border rounded-md">
             <TranscriptView />

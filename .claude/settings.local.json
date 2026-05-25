@@ -76,7 +76,10 @@
       "Bash(npm ls *)",
       "Bash(node -e \"console.log\\(require\\('C:/AntiGravity/Presenter/package.json'\\).name\\)\")",
       "Bash(gh repo *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(npx vercel *)"
     ]
   }
 }

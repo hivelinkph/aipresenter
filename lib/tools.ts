@@ -41,6 +41,11 @@ export const toolSchemas = {
   goto_page: z.object({
     pageNumber: z.number().int().positive(),
   }),
+  register_audience_member: z.object({
+    name: z.string().min(1),
+    tempId: z.string().min(1),
+  }),
+  start_presentation: z.object({}),
 } as const;
 
 export type ToolName = keyof typeof toolSchemas;
@@ -167,6 +172,22 @@ export const toolRegistry: Record<ToolName, ToolDescriptor> = {
     name: "goto_page",
     description:
       "Jump the PDF viewer to a specific 1-indexed page number. Use when the audience asks to revisit an earlier page or you want to reference a later one.",
+    runsOn: "client",
+    sensitive: false,
+    modes: ["pdf"],
+  },
+  register_audience_member: {
+    name: "register_audience_member",
+    description:
+      "Save the name of an audience member to the database so you can remember them. Pass the tempId you see in your system prompt and the name they just told you.",
+    runsOn: "client",
+    sensitive: false,
+    modes: ["pdf"],
+  },
+  start_presentation: {
+    name: "start_presentation",
+    description:
+      "Transition from the webcam greeting phase to the actual PDF presentation when you feel the introductions are complete.",
     runsOn: "client",
     sensitive: false,
     modes: ["pdf"],
