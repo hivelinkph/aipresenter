@@ -75,22 +75,11 @@ export async function POST(req: Request, { params }: Ctx) {
 
   const buf = Buffer.from(await blob.arrayBuffer());
 
-  // Extract per-page text
-  let pageTexts: string[];
+  // Get number of pages
+  let numPages = 0;
   try {
     const pdf = await getDocumentProxy(new Uint8Array(buf));
-    const numPages = pdf.numPages;
-    pageTexts = [];
-    for (let i = 1; i <= numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const text = content.items
-        .filter((item) => "str" in item && typeof item.str === "string")
-        .map((item) => (item as { str: string }).str)
-        .join(" ")
-        .trim();
-      pageTexts.push(text);
-    }
+    numPages = pdf.numPages;
   } catch (err) {
     return NextResponse.json(
       { error: `PDF parse failed: ${(err as Error).message}` },
@@ -100,28 +89,16 @@ export async function POST(req: Request, { params }: Ctx) {
 
   // Build prompt for Gemini text model
   const language = demo.language || "English";
-  const hasText = pageTexts.some((t) => t.length > 20);
-  const pagesBlock = pageTexts
-    .map(
-      (text, i) =>
-        `--- PAGE ${i + 1} ---\n${text || "(image-only page — no extractable text)"}`,
-    )
-    .join("\n\n");
 
   const prompt = [
     `You are a professional presentation script writer.`,
-    hasText
-      ? `Given the text content of a ${pageTexts.length}-page PDF presentation,`
-      : `Given a ${pageTexts.length}-page PDF presentation (most pages are image-only with no extractable text),`,
-    `generate a polished narration script for each page that a live AI presenter`,
-    `will read verbatim to an audience.`,
+    `I am providing you with a ${numPages}-page PDF presentation.`,
+    `Please review the entire PDF document (all its pages) and generate a polished narration script for each page that a live AI presenter will read verbatim to an audience.`,
     ``,
     `Rules:`,
     `- Write in ${language}`,
     `- Each page narration should be 2-4 paragraphs, conversational but professional`,
-    hasText
-      ? `- Reference specific data, figures, and key points from the page text`
-      : `- For image-only pages, write a brief general introduction/transition (1-2 sentences) that the presenter can later customize with specific details`,
+    `- Reference specific data, figures, text, and visual elements from the page`,
     `- Include natural transitions between concepts on the same page`,
     `- Do NOT include page numbers or headers like "Page 1:" in the narration text`,
     `- Do NOT include stage directions or speaker notes in brackets`,
@@ -129,9 +106,7 @@ export async function POST(req: Request, { params }: Ctx) {
     ``,
     `Return your response as a JSON array of strings, where index 0 is page 1's narration,`,
     `index 1 is page 2's narration, etc. Return ONLY the JSON array, no other text.`,
-    ``,
-    `PDF content:`,
-    pagesBlock,
+    `You MUST return an array with exactly ${numPages} elements.`,
   ].join("\n");
 
   // Call Gemini text model with retry + fallback
@@ -158,7 +133,19 @@ export async function POST(req: Request, { params }: Ctx) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inlineData: {
+                      mimeType: "application/pdf",
+                      data: buf.toString("base64"),
+                    },
+                  },
+                ],
+              },
+            ],
             generationConfig: {
               temperature: 0.7,
               maxOutputTokens: 8192,
@@ -199,17 +186,17 @@ export async function POST(req: Request, { params }: Ctx) {
         narrations = narrations.map((n) =>
           typeof n === "string" ? n : String(n ?? ""),
         );
-        while (narrations.length < pageTexts.length) {
+        while (narrations.length < numPages) {
           narrations.push("");
         }
       } catch {
-        narrations = pageTexts.map(() => "");
+        narrations = Array(numPages).fill("");
         narrations[0] = rawText;
       }
 
       return NextResponse.json({
         narrations,
-        totalPages: pageTexts.length,
+        totalPages: numPages,
         filename: targetFile.filename,
         model, // inform the client which model was used
       });
