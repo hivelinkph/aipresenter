@@ -454,6 +454,24 @@ export function useDemoOrchestrator() {
             // which the reconnect path handles silently.
             audioRef.current?.drainOutput();
           },
+          onTurnComplete: () => {
+            const s = useSession.getState();
+            if (
+              s.presentationMode === "pdf" &&
+              s.presentationPhase === "presentation" &&
+              s.state === "running"
+            ) {
+              const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
+              if (pdfBucket?.autoAdvance) {
+                const total = s.totalPages;
+                const cur = s.currentPageIndex;
+                if (cur < total - 1) {
+                  useTranscript.getState().append({ lane: "system", text: "AI finished reading page. Auto-advancing to next page." });
+                  s.setCurrentPageIndex(cur + 1);
+                }
+              }
+            }
+          },
           onToolCall: handleToolCall,
           onClose: (code, reason) => {
             const s = useSession.getState();

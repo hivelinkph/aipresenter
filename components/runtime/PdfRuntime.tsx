@@ -41,9 +41,10 @@ interface Props {
   pause?: () => void;
   resume?: () => void;
   setLiveAutoAdvance?: (enabled: boolean) => void;
+  endDemo?: () => void;
 }
 
-export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, resume, setLiveAutoAdvance }: Props) {
+export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, resume, setLiveAutoAdvance, endDemo }: Props) {
   const demoId = useSession((s) => s.demoId);
   const sources = useSession((s) => s.sources);
   const sessionState = useSession((s) => s.state);
@@ -413,6 +414,16 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, re
               >
                 <Minimize className="h-4 w-4" /> Minimize
               </Button>
+              {endDemo && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={endDemo}
+                  className="ml-2"
+                >
+                  End Demo
+                </Button>
+              )}
             </div>
           </div>
         </div>

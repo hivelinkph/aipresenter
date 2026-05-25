@@ -307,6 +307,7 @@ export default function DemoRunner() {
                 pause={pause} 
                 resume={resume}
                 setLiveAutoAdvance={setLiveAutoAdvance} 
+                endDemo={endDemo}
               />
             )
           )}
