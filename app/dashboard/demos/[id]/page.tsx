@@ -76,6 +76,7 @@ export default function DemoRunner() {
     micLevel,
     micMuted,
     toggleMic,
+    setLiveAutoAdvance,
   } = useDemoOrchestrator();
 
   const hydrateFromDemo = useSession((s) => s.hydrateFromDemo);
@@ -288,7 +289,13 @@ export default function DemoRunner() {
             </div>
           </div>
           {presentationMode === "pdf" && (
-            <PdfRuntime pushPdfPage={pushPdfPage} micMuted={micMuted} toggleMic={toggleMic} />
+            <PdfRuntime 
+              pushPdfPage={pushPdfPage} 
+              micMuted={micMuted} 
+              toggleMic={toggleMic} 
+              pause={pause} 
+              setLiveAutoAdvance={setLiveAutoAdvance} 
+            />
           )}
           <div className="border rounded-md">
             <TranscriptView />

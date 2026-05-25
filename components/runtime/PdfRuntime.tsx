@@ -11,6 +11,7 @@ import {
   Minimize,
   Mic,
   MicOff,
+  Pause,
 } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase/client";
@@ -36,9 +37,11 @@ interface Props {
   ) => void;
   micMuted?: boolean;
   toggleMic?: () => void;
+  pause?: () => void;
+  setLiveAutoAdvance?: (enabled: boolean) => void;
 }
 
-export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic }: Props) {
+export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, setLiveAutoAdvance }: Props) {
   const demoId = useSession((s) => s.demoId);
   const sources = useSession((s) => s.sources);
   const sessionState = useSession((s) => s.state);
@@ -61,6 +64,7 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic }: Props) 
   const pageNarrations = pdfBucket.pageNarrations ?? [];
   const qaTransition = pdfBucket.qaTransition ?? "";
   const presenterName = pdfBucket.presenterName ?? "";
+  const autoAdvance = !!pdfBucket.autoAdvance;
 
   // Resolve {presenterName} placeholder in Q&A transition
   const resolvedQaTransition = qaTransition.replace(
@@ -330,6 +334,16 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic }: Props) 
             </div>
 
             <div className="flex items-center gap-2">
+              {setLiveAutoAdvance && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLiveAutoAdvance(!autoAdvance)}
+                  className={autoAdvance ? "text-green-400 hover:bg-green-400/10" : "text-yellow-400 hover:bg-yellow-400/10"}
+                >
+                  {autoAdvance ? "Automatic Page" : "Manual Page"}
+                </Button>
+              )}
               {toggleMic && (
                 <Button
                   variant="ghost"
@@ -347,6 +361,17 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic }: Props) 
                     <Mic className="h-4 w-4" />
                   )}
                   {micMuted ? "Muted" : "Mic"}
+                </Button>
+              )}
+              {pause && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={pause}
+                  className="text-white hover:bg-white/10"
+                  title="Pause AI narration"
+                >
+                  <Pause className="h-4 w-4 mr-1" /> Pause
                 </Button>
               )}
               <div className="w-px h-6 bg-gray-600 mx-1" />

@@ -842,6 +842,44 @@ export function useDemoOrchestrator() {
     setMicMuted(muted);
   }, [micMuted]);
 
+  const setLiveAutoAdvance = useCallback((enabled: boolean) => {
+    const live = liveRef.current;
+    if (!live) return;
+    
+    // Update the session state so that components re-render with the correct setting
+    useSession.setState((s) => {
+      const currentSources = s.sources;
+      const currentPdfs = currentSources.pdfs || { files: [] };
+      return {
+        sources: {
+          ...currentSources,
+          pdfs: {
+            ...currentPdfs,
+            autoAdvance: enabled,
+          }
+        }
+      };
+    });
+
+    if (enabled) {
+      live.sendClientText(
+        `[SYSTEM: The human presenter has ENABLED auto-advance. From now on, when you've finished narrating a page, you MUST call the next_page tool to advance the viewer. Do not announce that you're advancing — just call the tool.]`
+      );
+      useTranscript.getState().append({
+        lane: "system",
+        text: "Auto-advance enabled by presenter.",
+      });
+    } else {
+      live.sendClientText(
+        `[SYSTEM: The human presenter has DISABLED auto-advance. From now on, do NOT call the next_page tool. Stop speaking when you finish a page and wait for the human to advance it manually.]`
+      );
+      useTranscript.getState().append({
+        lane: "system",
+        text: "Auto-advance disabled by presenter.",
+      });
+    }
+  }, []);
+
   return {
     start,
     pause,
@@ -853,6 +891,7 @@ export function useDemoOrchestrator() {
     micLevel,
     micMuted,
     toggleMic,
+    setLiveAutoAdvance,
   };
 }
 
@@ -937,7 +976,7 @@ function buildPdfSystemPrompt(
   presenterName: string = "",
 ): string {
   const pageEndingInstruction = autoAdvance
-    ? `When you've finished narrating a page (and answered any pending questions), call the next_page tool to advance the viewer for the audience. Do not announce that you're advancing — just call the tool. If you're on the last page, do NOT call next_page; instead invite questions and stay silent.`
+    ? `When you've finished narrating a page (and answered any pending questions), you MUST call the next_page tool to advance the viewer for the audience. Do not announce that you're advancing or say "next page" aloud — just call the tool. This is mandatory. If you're on the last page, do NOT call next_page; instead invite questions and stay silent.`
     : `When you've finished narrating a page, stop speaking and stay silent. Do NOT call next_page — the human presenter advances the viewer manually. After every page, invite questions briefly (in the demo language).`;
   const kbBlock = formatKbBlock(kbSnapshot);
   const nameBlock = formatPresenterNameBlock(presenterName);
