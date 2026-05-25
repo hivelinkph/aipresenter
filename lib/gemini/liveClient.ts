@@ -146,7 +146,7 @@ export class GeminiLiveClient {
     const b64 = arrayBufferToBase64(pcm16);
     this.raw({
       realtime_input: {
-        media_chunks: [{ mime_type: "audio/pcm;rate=16000", data: b64 }],
+        audio: { mime_type: "audio/pcm;rate=16000", data: b64 },
       },
     });
   }
@@ -155,7 +155,7 @@ export class GeminiLiveClient {
     if (!this.ws || this.closed) return;
     this.raw({
       realtime_input: {
-        media_chunks: [{ mime_type: "image/jpeg", data: base64 }],
+        video: { mime_type: "image/jpeg", data: base64 },
       },
     });
   }
