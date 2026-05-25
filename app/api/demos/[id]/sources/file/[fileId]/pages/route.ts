@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PDFParse } from "pdf-parse";
+import { getDocumentProxy } from "unpdf";
 import { getServerSupabase, getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -79,12 +79,23 @@ export async function GET(_req: Request, { params }: Ctx) {
   }
 
   const buf = Buffer.from(await blob.arrayBuffer());
-  const parser = new PDFParse({ data: new Uint8Array(buf) });
+
   try {
-    const result = await parser.getText();
-    const pages = result.pages
-      .sort((a, b) => a.num - b.num)
-      .map((p) => p.text.trim());
+    const pdf = await getDocumentProxy(new Uint8Array(buf));
+    const numPages = pdf.numPages;
+    const pages: string[] = [];
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .filter((item) => "str" in item && typeof item.str === "string")
+        .map((item) => (item as { str: string }).str)
+        .join(" ")
+        .trim();
+      pages.push(text);
+    }
+
     return NextResponse.json({
       filename: target.filename,
       pages,
@@ -95,7 +106,5 @@ export async function GET(_req: Request, { params }: Ctx) {
       { error: `PDF parse failed: ${(err as Error).message}` },
       { status: 500 },
     );
-  } finally {
-    await parser.destroy();
   }
 }

@@ -29,6 +29,7 @@ const CreateBody = z.object({
   sections: z.array(SectionSchema).default([]),
   role_names: z.array(z.string().min(1)).default([]),
   ground_to_kb: z.boolean().default(true),
+  pacing: z.enum(["slow", "moderate", "fast"]).default("moderate"),
   source_types: z
     .array(z.enum(SOURCE_TYPE_VALUES))
     .default(["websites"]),
@@ -44,7 +45,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("demos")
     .select(
-      "id, title, target_url, language, sections, role_names, ground_to_kb, source_types, sources, created_at, updated_at",
+      "id, title, target_url, language, sections, role_names, ground_to_kb, pacing, source_types, sources, created_at, updated_at",
     )
     .order("updated_at", { ascending: false });
   if (error) {
@@ -99,11 +100,12 @@ export async function POST(req: Request) {
       sections: parsed.data.sections,
       role_names: parsed.data.role_names,
       ground_to_kb: parsed.data.ground_to_kb,
+      pacing: parsed.data.pacing,
       source_types: parsed.data.source_types,
       sources: parsed.data.sources,
     })
     .select(
-      "id, title, target_url, language, sections, role_names, ground_to_kb, source_types, sources, created_at, updated_at",
+      "id, title, target_url, language, sections, role_names, ground_to_kb, pacing, source_types, sources, created_at, updated_at",
     )
     .single();
   if (error) {

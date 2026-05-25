@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "./session";
 import { useTranscript } from "./transcript";
 import { useCredentials, redactCredentials } from "./credentials";
-import { useSettings } from "./settings";
+import { useSettings, getPacingConfig } from "./settings";
 import { AudioIO } from "./gemini/audioIO";
 import { GeminiLiveClient } from "./gemini/liveClient";
 import { AgentClient } from "./agent/client";
@@ -383,6 +383,8 @@ export function useDemoOrchestrator() {
         }
       }
 
+      const pacingConfig = getPacingConfig(session.pacing);
+
       const systemInstruction = buildSystemPrompt(
         session.targetUrl,
         transcriptState.sections,
@@ -392,6 +394,8 @@ export function useDemoOrchestrator() {
         session.presentationMode,
         pdfOpts,
         kbSnapshot,
+        pacingConfig.promptHint,
+        settings.presenterName,
       );
 
       const live = new GeminiLiveClient(
@@ -401,6 +405,7 @@ export function useDemoOrchestrator() {
           systemInstruction,
           authMode,
           voiceName: settings.voice,
+          temperature: pacingConfig.temperature,
           resumptionHandle: isReconnect
             ? resumptionHandleRef.current ?? undefined
             : undefined,
@@ -498,11 +503,16 @@ export function useDemoOrchestrator() {
         } else {
           if (sess.presentationMode === "pdf") {
             // PDF mode — first [PAGE …] turn is sent by PdfRuntime once the
-            // viewer has loaded the document. Just open with a short greeting.
+            // viewer has loaded the document. Tell the AI to start right away
+            // when it receives the page cue, without a long preamble.
+            const hasName = !!settings.presenterName?.trim();
+            const introClause = hasName
+              ? `When the first [PAGE …] message arrives, briefly introduce yourself by name in one short sentence, then begin narrating the page immediately.`
+              : `Do NOT greet the audience or introduce yourself — wait silently for the first [PAGE …] message, then begin narrating immediately.`;
             live.sendClientText(
-              `Greet the audience in one short sentence (in their demo language) ` +
-                `and say you'll walk through the document together. Then go silent ` +
-                `and wait for the first [PAGE …] cue.`,
+              `You are now live presenting a PDF document to an audience. ` +
+                `${introClause} ` +
+                `If the page includes a NARRATION SCRIPT, read it verbatim.`,
             );
             return;
           }
@@ -696,6 +706,7 @@ export function useDemoOrchestrator() {
       const audio = new AudioIO({
         onInputChunk: (pcm) => liveRef.current?.sendClientAudio(pcm),
         onInputLevel: setMicLevel,
+        captureSystemAudio: useSettings.getState().captureSystemAudio,
       });
       await audio.start();
       audioRef.current = audio;
@@ -773,26 +784,63 @@ export function useDemoOrchestrator() {
    * Send a [PAGE n/total]: <text> turn to Gemini, used by the PDF runtime
    * each time the audience advances pages. Drains any in-flight audio so
    * the model stops mid-sentence and immediately narrates the new page.
+   *
+   * When `narration` is provided, the AI reads it verbatim instead of
+   * freestyle-narrating from the page text. After the last page, the
+   * `qaTransition` text is sent as a follow-up instruction.
    */
   const pushPdfPage = useCallback(
-    (pageIndex: number, total: number, pageText: string) => {
+    (
+      pageIndex: number,
+      total: number,
+      pageText: string,
+      narration?: string,
+      isLastPage?: boolean,
+      qaTransition?: string,
+    ) => {
       const live = liveRef.current;
       if (!live) return;
       audioRef.current?.drainOutput();
       const trimmed = pageText.trim();
       const sanitized =
         trimmed.length > 0 ? trimmed : "(this page contains no extractable text)";
-      live.sendClientText(
-        `[PAGE ${pageIndex + 1}/${total}]:\n${sanitized}\n\n` +
-          `Narrate this page in the demo language. Stay grounded in the text above.`,
-      );
+
+      let instruction: string;
+      if (narration && narration.trim().length > 0) {
+        // Verbatim mode — AI reads the script exactly as written
+        instruction =
+          `[PAGE ${pageIndex + 1}/${total}]:\n${sanitized}\n\n` +
+          `NARRATION SCRIPT (read this VERBATIM — word for word, do not paraphrase or skip):\n` +
+          `${narration.trim()}`;
+      } else {
+        // Freestyle mode — AI narrates from the page text
+        instruction =
+          `[PAGE ${pageIndex + 1}/${total}]:\n${sanitized}\n\n` +
+          `Narrate this page in the demo language. Stay grounded in the text above.`;
+      }
+
+      // If this is the last page, append Q&A transition instruction
+      if (isLastPage && qaTransition && qaTransition.trim().length > 0) {
+        instruction +=
+          `\n\nIMPORTANT: After you finish narrating this page, read the following Q&A transition VERBATIM:\n` +
+          `"${qaTransition.trim()}"` +
+          `\nThen stay silent and wait for audience questions.`;
+      }
+
+      live.sendClientText(instruction);
       useTranscript.getState().append({
         lane: "system",
-        text: `Page ${pageIndex + 1} of ${total}`,
+        text: `Page ${pageIndex + 1} of ${total}${narration ? " (scripted)" : ""}`,
       });
     },
     [],
   );
+
+  const toggleMic = useCallback(() => {
+    const muted = !micMuted;
+    audioRef.current?.setInputMuted(muted);
+    setMicMuted(muted);
+  }, [micMuted]);
 
   return {
     start,
@@ -804,6 +852,7 @@ export function useDemoOrchestrator() {
     pushPdfPage,
     micLevel,
     micMuted,
+    toggleMic,
   };
 }
 
@@ -816,6 +865,8 @@ function buildSystemPrompt(
   presentationMode: "website" | "pdf" = "website",
   pdfOpts: { autoAdvance?: boolean } = {},
   kbSnapshot: string[] = [],
+  pacingHint: string = "",
+  presenterName: string = "",
 ): string {
   if (presentationMode === "pdf") {
     return buildPdfSystemPrompt(
@@ -823,6 +874,8 @@ function buildSystemPrompt(
       language,
       !!pdfOpts.autoAdvance,
       kbSnapshot,
+      pacingHint,
+      presenterName,
     );
   }
   const sectionList = sections
@@ -833,6 +886,7 @@ function buildSystemPrompt(
     })
     .join("\n");
   const kbBlock = formatKbBlock(kbSnapshot);
+  const nameBlock = formatPresenterNameBlock(presenterName);
   return [
     `You are a voiceover + browser-automation tool. You have ONE job: read the provided`,
     `SCRIPT lines aloud in order while driving a web browser through the supplied tools.`,
@@ -844,6 +898,8 @@ function buildSystemPrompt(
     ``,
     persona.trim(),
     ``,
+    ...(nameBlock ? [nameBlock, ``] : []),
+    ...(pacingHint ? [`PACING: ${pacingHint}`, ``] : []),
     `Narrate the entire demo in ${language}. Speak naturally in ${language} including`,
     `when reading SCRIPT lines and answering interruptions. Keep proper nouns, brand`,
     `names, URLs, and on-screen English UI labels in their original form.`,
@@ -877,26 +933,46 @@ function buildPdfSystemPrompt(
   language: string,
   autoAdvance: boolean,
   kbSnapshot: string[] = [],
+  pacingHint: string = "",
+  presenterName: string = "",
 ): string {
   const pageEndingInstruction = autoAdvance
     ? `When you've finished narrating a page (and answered any pending questions), call the next_page tool to advance the viewer for the audience. Do not announce that you're advancing — just call the tool. If you're on the last page, do NOT call next_page; instead invite questions and stay silent.`
     : `When you've finished narrating a page, stop speaking and stay silent. Do NOT call next_page — the human presenter advances the viewer manually. After every page, invite questions briefly (in the demo language).`;
   const kbBlock = formatKbBlock(kbSnapshot);
+  const nameBlock = formatPresenterNameBlock(presenterName);
   return [
     `You are a live AI presenter walking an audience through a PDF document.`,
-    `The audience can see the current page on their screen.`,
+    `The audience can see the current page on their screen in fullscreen mode.`,
     ``,
     persona.trim(),
     ``,
+    ...(nameBlock ? [nameBlock, ``] : []),
+    ...(pacingHint ? [`PACING: ${pacingHint}`, ``] : []),
     `Speak entirely in ${language}. Keep proper nouns, brand names, URLs, and`,
     `English UI labels in their original form.`,
     ``,
-    `Each time the page changes you will receive a system message of the form`,
-    `[PAGE n/total]: <text of that page>. When you receive it:`,
+    `Each time the page changes you will receive a system message. There are two modes:`,
+    ``,
+    `MODE A — SCRIPTED (contains "NARRATION SCRIPT"):`,
+    `When the message includes a NARRATION SCRIPT block, you MUST read it EXACTLY`,
+    `as written — word for word, do not paraphrase, summarize, add commentary, or`,
+    `skip any part. Speak the entire script verbatim. This is your most important rule.`,
+    `Do NOT add introductory phrases like "On this page" before the script.`,
+    `Just start reading the script directly.`,
+    ``,
+    `MODE B — FREESTYLE (no narration script):`,
+    `When there is no NARRATION SCRIPT, use the page text to narrate naturally:`,
     `1. Briefly orient the audience ("On this page, …" — in ${language}).`,
     `2. Walk through the key points using the supplied page text. Stay grounded`,
     `   in what's actually written; do not invent figures or claims.`,
-    `3. ${pageEndingInstruction}`,
+    ``,
+    `After finishing each page's narration:`,
+    `${pageEndingInstruction}`,
+    ``,
+    `Q&A TRANSITION: If the last page message includes a Q&A transition script,`,
+    `read it VERBATIM after finishing the page narration. Then stay silent and`,
+    `wait for audience questions. Answer questions when asked, then go quiet again.`,
     ...(kbBlock ? ["", kbBlock] : []),
     ``,
     `If the audience interrupts with a question, answer it (using the current`,
@@ -906,6 +982,23 @@ function buildPdfSystemPrompt(
     ``,
     `Never call end_demo on your own — only respond to an explicit`,
     `[SYSTEM: end demo] message with a one-sentence wrap-up.`,
+  ].join("\n");
+}
+
+function formatPresenterNameBlock(name: string): string {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "";
+  return [
+    `YOUR NAME: You are the AI presenter and your name is "${trimmed}".`,
+    `- When you first begin speaking (or right after the opening greeting), briefly`,
+    `  introduce yourself by this name in one short sentence in the demo language`,
+    `  (e.g., "Hi, I'm ${trimmed}, and I'll be walking you through this today.").`,
+    `  Do NOT re-introduce yourself again later in the demo.`,
+    `- If an audience member addresses you by name ("${trimmed}, can you…", "Hey ${trimmed}…",`,
+    `  or any close variant), treat it as a direct question to you and answer it`,
+    `  naturally, then resume the demo. Match by sound, not just spelling — accept`,
+    `  reasonable pronunciation variants.`,
+    `- Never invent a different name; always use exactly "${trimmed}".`,
   ].join("\n");
 }
 

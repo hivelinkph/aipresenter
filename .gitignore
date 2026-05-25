@@ -23,3 +23,9 @@ yarn-error.log*
 
 playwright-report/
 test-results/
+
+.vercel
+
+# Local tunneling / build artifacts
+cloudflared.exe
+*.tsbuildinfo

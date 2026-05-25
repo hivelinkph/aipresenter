@@ -54,6 +54,7 @@ interface DemoRow {
   target_url: string;
   language: DemoLanguage;
   ground_to_kb: boolean;
+  pacing: "slow" | "moderate" | "fast";
   source_types: SourceType[];
   sources: DemoSources;
   sections: Array<{ name: string; summary: string; narration?: string }>;
@@ -74,6 +75,7 @@ export default function DemoRunner() {
     pushPdfPage,
     micLevel,
     micMuted,
+    toggleMic,
   } = useDemoOrchestrator();
 
   const hydrateFromDemo = useSession((s) => s.hydrateFromDemo);
@@ -121,6 +123,7 @@ export default function DemoRunner() {
           target_url: demo.target_url,
           language: demo.language,
           ground_to_kb: demo.ground_to_kb ?? true,
+          pacing: demo.pacing ?? "moderate",
           source_types:
             demo.source_types && demo.source_types.length > 0
               ? demo.source_types
@@ -159,6 +162,7 @@ export default function DemoRunner() {
       language: session.language,
       sections,
       role_names: roleNames,
+      pacing: session.pacing,
       source_types: session.sourceTypes,
       sources: session.sources,
     };
@@ -284,7 +288,7 @@ export default function DemoRunner() {
             </div>
           </div>
           {presentationMode === "pdf" && (
-            <PdfRuntime pushPdfPage={pushPdfPage} />
+            <PdfRuntime pushPdfPage={pushPdfPage} micMuted={micMuted} toggleMic={toggleMic} />
           )}
           <div className="border rounded-md">
             <TranscriptView />

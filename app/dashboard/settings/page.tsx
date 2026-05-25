@@ -14,17 +14,25 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   useSettings,
   VOICE_OPTIONS,
+  PACING_OPTIONS,
   DEFAULT_PERSONA,
   type VoiceId,
+  type PacingId,
 } from "@/lib/settings";
 
 export default function SettingsPage() {
+  const presenterName = useSettings((s) => s.presenterName);
   const voice = useSettings((s) => s.voice);
   const modelId = useSettings((s) => s.modelId);
   const persona = useSettings((s) => s.persona);
+  const pacing = useSettings((s) => s.pacing);
+  const captureSystemAudio = useSettings((s) => s.captureSystemAudio);
+  const setPresenterName = useSettings((s) => s.setPresenterName);
   const setVoice = useSettings((s) => s.setVoice);
   const setModelId = useSettings((s) => s.setModelId);
   const setPersona = useSettings((s) => s.setPersona);
+  const setPacing = useSettings((s) => s.setPacing);
+  const setCaptureSystemAudio = useSettings((s) => s.setCaptureSystemAudio);
   const resetPersona = useSettings((s) => s.resetPersona);
   const hydrate = useSettings((s) => s.hydrate);
 
@@ -40,9 +48,12 @@ export default function SettingsPage() {
         if (!res.ok) throw new Error(res.statusText);
         const { settings } = (await res.json()) as {
           settings: {
+            presenter_name: string | null;
             voice: string | null;
             model_id: string | null;
             persona: string | null;
+            pacing: string | null;
+            capture_system_audio?: boolean | null;
           } | null;
         };
         if (cancelled) return;
@@ -66,9 +77,12 @@ export default function SettingsPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          presenter_name: presenterName.trim() || null,
           voice,
           model_id: modelId,
           persona,
+          pacing,
+          capture_system_audio: captureSystemAudio,
         }),
       });
       if (!res.ok) {
@@ -97,6 +111,27 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>AI Presenter Name</CardTitle>
+          <CardDescription>
+            The name your AI presenter uses to introduce itself. It will also
+            respond when an audience member calls it by this name. Leave blank
+            to skip self-introduction.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label htmlFor="presenterName">Presenter name</Label>
+          <Input
+            id="presenterName"
+            value={presenterName}
+            onChange={(e) => setPresenterName(e.target.value)}
+            placeholder="e.g. Aria, Max, Nova"
+            maxLength={64}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Voice</CardTitle>
           <CardDescription>
             Which Gemini Live voice the AI presenter uses.
@@ -117,6 +152,42 @@ export default function SettingsPage() {
               >
                 <div className="font-medium">{v.id}</div>
                 <div className="text-xs text-muted-foreground">{v.blurb}</div>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Presentation Pace</CardTitle>
+          <CardDescription>
+            Controls the AI's speaking speed and generation consistency.
+            Lower settings produce more deterministic, predictable pacing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            {PACING_OPTIONS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPacing(p.id as PacingId)}
+                className={`text-left rounded-md border p-3 transition-colors ${
+                  pacing === p.id
+                    ? "border-secondary bg-secondary/10"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">
+                    {p.id === "slow" ? "🐢" : p.id === "moderate" ? "⚖️" : "⚡"}
+                  </span>
+                  <div className="font-medium">{p.label}</div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 ml-8">
+                  {p.blurb}
+                </div>
               </button>
             ))}
           </div>
@@ -165,6 +236,25 @@ export default function SettingsPage() {
               Reset to default
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Zoom Audience / System Audio</CardTitle>
+          <CardDescription>
+            Capture your computer's audio (like a Zoom meeting) so the AI can hear audience questions. When starting a demo, your browser will prompt you to share your screen/audio.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="captureSystemAudio"
+            checked={captureSystemAudio}
+            onChange={(e) => setCaptureSystemAudio(e.target.checked)}
+            className="h-4 w-4"
+          />
+          <Label htmlFor="captureSystemAudio">Enable System Audio Capture</Label>
         </CardContent>
       </Card>
 

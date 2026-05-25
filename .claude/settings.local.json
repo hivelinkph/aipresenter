@@ -71,7 +71,12 @@
       "Bash(findstr :7777)",
       "Bash(findstr :3000)",
       "Bash(netstat -ano -p TCP)",
-      "Bash(findstr LISTENING)"
+      "Bash(findstr LISTENING)",
+      "Bash(gh auth *)",
+      "Bash(npm ls *)",
+      "Bash(node -e \"console.log\\(require\\('C:/AntiGravity/Presenter/package.json'\\).name\\)\")",
+      "Bash(gh repo *)",
+      "Bash(git add *)"
     ]
   }
 }

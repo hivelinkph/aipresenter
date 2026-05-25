@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useSettings, VOICE_OPTIONS, DEFAULT_PERSONA, type VoiceId } from "@/lib/settings";
+import { useSettings, VOICE_OPTIONS, PACING_OPTIONS, DEFAULT_PERSONA, type VoiceId, type PacingId } from "@/lib/settings";
+import { useSession } from "@/lib/session";
 import { GeminiLiveClient } from "@/lib/gemini/liveClient";
 import { Settings2, Volume2, RotateCcw } from "lucide-react";
 
@@ -17,6 +18,8 @@ export function SettingsPanel() {
   const persona = useSettings((s) => s.persona);
   const setPersona = useSettings((s) => s.setPersona);
   const resetPersona = useSettings((s) => s.resetPersona);
+  const pacing = useSession((s) => s.pacing);
+  const setPacing = useSession((s) => s.setPacing);
 
   const [open, setOpen] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -85,6 +88,38 @@ export function SettingsPanel() {
             {testError && (
               <p className="text-xs text-destructive">⚠ {testError}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Presentation pace</Label>
+            <div className="grid gap-2">
+              {PACING_OPTIONS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPacing(p.id as PacingId)}
+                  className={`text-left rounded-md border p-3 transition-colors ${
+                    pacing === p.id
+                      ? "border-secondary bg-secondary/10"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">
+                      {p.id === "slow" ? "🐢" : p.id === "moderate" ? "⚖️" : "⚡"}
+                    </span>
+                    <div className="font-medium text-sm">{p.label}</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5 ml-7">
+                    {p.blurb}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Controls AI speaking speed and generation consistency for this demo.
+              Saved per-demo when you click Save.
+            </p>
           </div>
 
           <div className="space-y-2">

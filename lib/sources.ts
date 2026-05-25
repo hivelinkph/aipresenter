@@ -58,6 +58,16 @@ export interface SourceFileBucket {
 export interface PdfSourceBucket extends SourceFileBucket {
   /** When true, the AI calls next_page to advance after finishing each page. */
   autoAdvance?: boolean;
+  /**
+   * Per-page narration scripts. Index 0 = page 1, index 1 = page 2, etc.
+   * When present, the AI reads the script verbatim instead of freestyle-narrating.
+   * Empty strings mean "freestyle this page from the page text."
+   */
+  pageNarrations?: string[];
+  /** Human presenter name shown in the Q&A transition. */
+  presenterName?: string;
+  /** Q&A transition text spoken after the last page. Uses {presenterName} placeholder. */
+  qaTransition?: string;
 }
 
 export interface DemoSources {

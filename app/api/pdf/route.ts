@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import React from "react";
 import { z } from "zod";
-import { renderToStream } from "@react-pdf/renderer";
-import { SummaryDocument } from "@/lib/pdf/summary";
 import { getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const BodySchema = z.object({
   targetUrl: z.string().url(),
@@ -47,20 +46,32 @@ export async function POST(req: Request) {
     );
   }
 
-  const { targetUrl, snapshot } = parsed.data;
+  try {
+    const { renderToStream } = await import("@react-pdf/renderer");
+    const { SummaryDocument } = await import("@/lib/pdf/summary");
 
-  const element = React.createElement(SummaryDocument, {
-    snapshot: { ...snapshot, targetUrl },
-    targetUrl,
-  });
-  // renderToStream's type expects DocumentProps, but SummaryDocument returns a
-  // <Document> internally — the runtime call is correct, the types just disagree.
-  const stream = await renderToStream(element as unknown as Parameters<typeof renderToStream>[0]);
+    const { targetUrl, snapshot } = parsed.data;
 
-  return new Response(stream as unknown as ReadableStream, {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="demo-summary-${Date.now()}.pdf"`,
-    },
-  });
+    const element = React.createElement(SummaryDocument, {
+      snapshot: { ...snapshot, targetUrl },
+      targetUrl,
+    });
+
+    const stream = await renderToStream(
+      element as unknown as Parameters<typeof renderToStream>[0],
+    );
+
+    return new Response(stream as unknown as ReadableStream, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="demo-summary-${Date.now()}.pdf"`,
+      },
+    });
+  } catch (err) {
+    console.error("[api/pdf] renderToStream failed:", err);
+    return NextResponse.json(
+      { error: `PDF render failed: ${(err as Error).message}` },
+      { status: 500 },
+    );
+  }
 }

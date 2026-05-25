@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { DemoSources, SourceType } from "./sources";
+import type { PacingId } from "./settings";
 
 export type SessionState =
   | "idle"
@@ -43,6 +44,7 @@ interface SessionStore {
   /** PDF runtime — total page count of the active file. 0 until known. */
   totalPages: number;
   currentSection: string | null;
+  pacing: PacingId;
   startedAt: number | null;
   endedAt: number | null;
   connections: ConnectionStatus;
@@ -62,6 +64,7 @@ interface SessionStore {
   setCurrentPageIndex: (i: number) => void;
   setTotalPages: (n: number) => void;
   setCurrentSection: (name: string | null) => void;
+  setPacing: (p: PacingId) => void;
   setConnection: <K extends keyof ConnectionStatus>(
     key: K,
     value: ConnectionStatus[K],
@@ -79,6 +82,7 @@ interface SessionStore {
     ground_to_kb: boolean;
     source_types: SourceType[];
     sources: DemoSources;
+    pacing?: PacingId;
   }) => void;
 }
 
@@ -103,6 +107,7 @@ export const useSession = create<SessionStore>((set) => ({
   currentPageIndex: 0,
   totalPages: 0,
   currentSection: null,
+  pacing: "moderate" as PacingId,
   startedAt: null,
   endedAt: null,
   connections: { ...initialConnections },
@@ -128,6 +133,7 @@ export const useSession = create<SessionStore>((set) => ({
       return { sourceTypes: Array.from(set) };
     }),
   setCurrentSection: (currentSection) => set({ currentSection }),
+  setPacing: (pacing) => set({ pacing }),
   setConnection: (key, value) =>
     set((prev) => ({ connections: { ...prev.connections, [key]: value } })),
   setError: (lastError) => set({ lastError }),
@@ -155,6 +161,7 @@ export const useSession = create<SessionStore>((set) => ({
       targetUrl: demo.target_url,
       language: demo.language,
       groundToKb: demo.ground_to_kb,
+      pacing: demo.pacing ?? "moderate",
       sourceTypes:
         demo.source_types && demo.source_types.length > 0
           ? demo.source_types

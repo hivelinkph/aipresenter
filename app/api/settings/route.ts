@@ -6,9 +6,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const PatchBody = z.object({
+  presenter_name: z.string().nullable().optional(),
   voice: z.string().nullable().optional(),
   model_id: z.string().nullable().optional(),
   persona: z.string().nullable().optional(),
+  pacing: z.enum(["slow", "moderate", "fast"]).optional(),
   default_language: z.enum(["English", "Tagalog", "Bisaya"]).optional(),
 });
 
@@ -20,7 +22,9 @@ export async function GET() {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from("user_settings")
-    .select("voice, model_id, persona, default_language, updated_at")
+    .select(
+      "presenter_name, voice, model_id, persona, pacing, default_language, updated_at",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) {
@@ -53,7 +57,9 @@ export async function PATCH(req: Request) {
       },
       { onConflict: "user_id" },
     )
-    .select("voice, model_id, persona, default_language, updated_at")
+    .select(
+      "presenter_name, voice, model_id, persona, pacing, default_language, updated_at",
+    )
     .single();
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

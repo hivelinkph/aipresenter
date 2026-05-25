@@ -40,13 +40,16 @@ export interface AudioIOOptions {
   outputDeviceId?: string;
   onInputLevel?: (level: number) => void;
   onInputChunk: (pcm16: ArrayBuffer) => void;
+  captureSystemAudio?: boolean;
 }
 
 export class AudioIO {
   private ctx: AudioContext | null = null;
   private micStream: MediaStream | null = null;
+  private systemStream: MediaStream | null = null;
   private workletNode: AudioWorkletNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
+  private systemSource: MediaStreamAudioSourceNode | null = null;
   private analyser: AnalyserNode | null = null;
   private analyserTimer: number | null = null;
 
@@ -76,17 +79,45 @@ export class AudioIO {
       video: false,
     });
 
+    if (this.opts.captureSystemAudio) {
+      try {
+        this.systemStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true, // required to prompt
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          }
+        });
+        // We only want the audio, so we can stop the video track right away.
+        this.systemStream.getVideoTracks().forEach((track) => track.stop());
+      } catch (err) {
+        console.warn("System audio capture cancelled or failed:", err);
+      }
+    }
+
     this.source = this.ctx.createMediaStreamSource(this.micStream);
+    if (this.systemStream && this.systemStream.getAudioTracks().length > 0) {
+      this.systemSource = this.ctx.createMediaStreamSource(this.systemStream);
+    }
+
     this.analyser = this.ctx.createAnalyser();
     this.analyser.fftSize = 512;
+    
     this.source.connect(this.analyser);
+    if (this.systemSource) {
+      this.systemSource.connect(this.analyser);
+    }
 
     this.workletNode = new AudioWorkletNode(this.ctx, "capture-processor");
     this.workletNode.port.onmessage = (e: MessageEvent<ArrayBuffer>) => {
       if (this.inputMuted) return;
       this.opts.onInputChunk(e.data);
     };
+    
     this.source.connect(this.workletNode);
+    if (this.systemSource) {
+      this.systemSource.connect(this.workletNode);
+    }
 
     if (this.opts.onInputLevel && this.analyser) {
       const bins = new Uint8Array(this.analyser.frequencyBinCount);
@@ -151,15 +182,19 @@ export class AudioIO {
     }
     this.workletNode?.disconnect();
     this.source?.disconnect();
+    this.systemSource?.disconnect();
     this.analyser?.disconnect();
     this.micStream?.getTracks().forEach((t) => t.stop());
+    this.systemStream?.getTracks().forEach((t) => t.stop());
     await this.ctx?.close();
     await this.outputCtx?.close();
     this.ctx = null;
     this.outputCtx = null;
     this.micStream = null;
+    this.systemStream = null;
     this.workletNode = null;
     this.source = null;
+    this.systemSource = null;
     this.analyser = null;
   }
 }

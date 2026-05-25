@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSupabase, getUser } from "@/lib/supabase/server";
 import { isSupportedMime, resolveMime } from "@/lib/kb/extract";
 
@@ -125,9 +125,32 @@ export async function POST(req: Request) {
     );
   }
 
-  // Kick off the processing pipeline. Forward the auth cookie so the
-  // process route's RLS context matches this user.
-  fireProcessing(req, docRow.id);
+  // Kick off the processing pipeline in the background using Next.js `after`.
+  // Forward the auth cookie so the process route's RLS context matches this user.
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || new URL(req.url).host;
+  const protocol = req.headers.get("x-forwarded-proto") || "http";
+  const origin = `${protocol}://${host}`;
+  const cookie = req.headers.get("cookie") ?? "";
+  
+  after(() => {
+    const targetUrl = `${origin}/api/kb/process`;
+    console.log(`[kb/upload] Firing background process to: ${targetUrl}`);
+    return fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        cookie,
+      },
+      body: JSON.stringify({ documentId: docRow.id }),
+    }).then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error(`[kb/upload] Background fetch returned ${res.status}: ${text}`);
+      } else {
+        console.log(`[kb/upload] Background fetch succeeded.`);
+      }
+    }).catch(e => console.error("[kb/upload] Background KB process fetch failed:", e));
+  });
 
   return NextResponse.json({
     document: { id: docRow.id, filename: file.name, status: "pending" },
@@ -136,23 +159,4 @@ export async function POST(req: Request) {
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 200);
-}
-
-function fireProcessing(req: Request, documentId: string) {
-  // Build absolute URL from the incoming request so we hit the same origin
-  // (works in dev + Vercel without hard-coding the host).
-  const origin = new URL(req.url).origin;
-  const cookie = req.headers.get("cookie") ?? "";
-  // Best-effort fire-and-forget; we don't await.
-  void fetch(`${origin}/api/kb/process`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      cookie,
-    },
-    body: JSON.stringify({ documentId }),
-    keepalive: true,
-  }).catch(() => {
-    // Swallow — the row is already pending; the user can re-trigger via UI.
-  });
 }

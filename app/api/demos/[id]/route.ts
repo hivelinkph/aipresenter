@@ -27,6 +27,7 @@ const UpdateBody = z.object({
   sections: z.array(SectionSchema).optional(),
   role_names: z.array(z.string().min(1)).optional(),
   ground_to_kb: z.boolean().optional(),
+  pacing: z.enum(["slow", "moderate", "fast"]).optional(),
   source_types: z.array(z.enum(SOURCE_TYPE_VALUES)).optional(),
   sources: z.record(z.string(), z.unknown()).optional(),
 });
@@ -45,7 +46,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   const { data, error } = await supabase
     .from("demos")
     .select(
-      "id, title, target_url, language, sections, role_names, ground_to_kb, source_types, sources, created_at, updated_at",
+      "id, title, target_url, language, sections, role_names, ground_to_kb, pacing, source_types, sources, created_at, updated_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -78,7 +79,7 @@ export async function PUT(req: Request, { params }: Ctx) {
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select(
-      "id, title, target_url, language, sections, role_names, ground_to_kb, source_types, sources, created_at, updated_at",
+      "id, title, target_url, language, sections, role_names, ground_to_kb, pacing, source_types, sources, created_at, updated_at",
     )
     .maybeSingle();
   if (error) {

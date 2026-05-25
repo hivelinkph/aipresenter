@@ -29,6 +29,8 @@ export interface LiveSessionConfig {
   model: string;
   systemInstruction: string;
   voiceName?: string;
+  /** Generation temperature (0.0–1.0). Lower = more deterministic pacing. */
+  temperature?: number;
   /** "raw" = API key (passed via ?key=); "ephemeral" = short-lived token (?access_token=). */
   authMode?: "raw" | "ephemeral";
   /** Resumption handle from a previous session's sessionResumptionUpdate. */
@@ -95,6 +97,9 @@ export class GeminiLiveClient {
         model: `models/${this.config.model}`,
         generation_config: {
           response_modalities: ["AUDIO"],
+          ...(this.config.temperature != null
+            ? { temperature: this.config.temperature }
+            : {}),
           ...(this.config.voiceName
             ? {
                 speech_config: {

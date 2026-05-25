@@ -1,6 +1,3 @@
-import { PDFParse } from "pdf-parse";
-import { extractRawText as mammothExtract } from "mammoth";
-
 const PLAIN_MIMES = new Set([
   "text/plain",
   "text/markdown",
@@ -46,6 +43,10 @@ export function resolveMime(mime: string, filename: string): string {
 /**
  * Extract plain text from a binary buffer based on its mime. Returns the
  * full document text (no chunking). Throws on unsupported mime.
+ *
+ * Uses `unpdf` for PDF extraction — it bundles its own serverless-safe
+ * pdfjs build and avoids the worker/DOMMatrix issues that plague
+ * `pdf-parse` v2 + `pdfjs-dist` in Vercel serverless functions.
  */
 export async function extractText(
   buf: Buffer,
@@ -55,16 +56,16 @@ export async function extractText(
   const resolved = resolveMime(mime, filename);
 
   if (PDF_MIMES.has(resolved)) {
-    const parser = new PDFParse({ data: new Uint8Array(buf) });
-    try {
-      const { text } = await parser.getText();
-      return normalize(text);
-    } finally {
-      await parser.destroy();
-    }
+    const { extractText: unpdfExtract } = await import("unpdf");
+    const result = await unpdfExtract(new Uint8Array(buf), { mergePages: true });
+    const extracted = Array.isArray(result.text)
+      ? result.text.join("\n")
+      : String(result.text ?? "");
+    return normalize(extracted);
   }
 
   if (DOCX_MIMES.has(resolved)) {
+    const { extractRawText: mammothExtract } = await import("mammoth");
     const { value } = await mammothExtract({ buffer: buf });
     return normalize(value);
   }
@@ -79,7 +80,7 @@ export async function extractText(
 function normalize(text: string): string {
   return text
     .replace(/\r\n?/g, "\n")
-    .replace(/[   ]/g, " ") // non-breaking spaces
+    .replace(/[\u00A0\u2007\u202F]/g, " ") // non-breaking spaces
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
