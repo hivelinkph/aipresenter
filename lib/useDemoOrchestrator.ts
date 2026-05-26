@@ -456,8 +456,15 @@ export function useDemoOrchestrator() {
                 if (newText.includes("[NEXT_PAGE]")) {
                   newText = newText.replace(/\[NEXT_PAGE\]/g, "");
                   modified = true;
-                  autoAdvancePendingRef.current = true;
-                  useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance (queued)." });
+                  const s = useSession.getState();
+                  if (s.presentationMode === "pdf" && s.currentPageIndex >= s.totalPages - 1) {
+                    // Fallback: AI outputted [NEXT_PAGE] on the last page instead of [START_QA]
+                    qaTransitionPendingRef.current = true;
+                    useTranscript.getState().append({ lane: "system", text: "Presentation finished (fallback). Transitioning to Q&A (queued)." });
+                  } else {
+                    autoAdvancePendingRef.current = true;
+                    useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance (queued)." });
+                  }
                 }
                 
                 // Intercept the [START_QA] directive for deterministic phase transition
@@ -589,19 +596,20 @@ export function useDemoOrchestrator() {
           // to pick up from the current section.
           if (resumptionHandleRef.current) return;
           if (sess.presentationMode === "pdf") {
+            const isLastPage = sess.currentPageIndex >= sess.totalPages - 1;
+            let reconnectMsg = `[SYSTEM: the prior Gemini session ended and has been reconnected. Continue the demo. We are currently on page ${sess.currentPageIndex + 1} of ${sess.totalPages}.]`;
+            if (isLastPage) {
+              reconnectMsg += ` Once you finish delivering this page's narration, you MUST transition to the Q&A phase. Output the keyword "[START_QA]" to trigger the system transition.`;
+            }
+            live.sendClientText(reconnectMsg);
+          } else {
+            const cur = sess.currentSection;
             live.sendClientText(
               `[SYSTEM: the prior Gemini session ended and has been reconnected. ` +
-                `Resume narrating the current PDF page silently — wait for the ` +
-                `next [PAGE …] system message before speaking again.]`,
-            );
-            return;
-          }
-          const cur = sess.currentSection;
-          live.sendClientText(
-            `[SYSTEM: the prior Gemini session ended and has been reconnected. ` +
               `Continue the demo${cur ? ` from section "${cur}"` : ""} using the SCRIPT in your ` +
-              `instructions. Do not re-narrate prior sections; pick up where you left off.]`,
-          );
+              `instructions. Do not re-narrate prior sections; pick up where you left off.]`
+            );
+          }
         } else {
           if (sess.presentationMode === "pdf") {
             const hasName = !!settings.presenterName?.trim();
