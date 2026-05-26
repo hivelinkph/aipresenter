@@ -455,22 +455,9 @@ export function useDemoOrchestrator() {
             audioRef.current?.drainOutput();
           },
           onTurnComplete: () => {
-            const s = useSession.getState();
-            if (
-              s.presentationMode === "pdf" &&
-              s.presentationPhase === "presentation" &&
-              s.state === "running"
-            ) {
-              const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
-              if (pdfBucket?.autoAdvance) {
-                const total = s.totalPages;
-                const cur = s.currentPageIndex;
-                if (cur < total - 1) {
-                  useTranscript.getState().append({ lane: "system", text: "AI finished reading page. Auto-advancing to next page." });
-                  s.setCurrentPageIndex(cur + 1);
-                }
-              }
-            }
+            // We previously had auto-advance logic here, but it fired on EVERY turn completion
+            // including VAD interruptions and answers to user questions, causing skipping.
+            // We must rely on the AI calling the `next_page` tool explicitly instead.
           },
           onToolCall: handleToolCall,
           onClose: (code, reason) => {
@@ -860,7 +847,7 @@ export function useDemoOrchestrator() {
       const isAutoAdvance = !!pdfBucket?.autoAdvance;
 
       if (isAutoAdvance && !isLastPage) {
-        instruction += `\n\nCRITICAL INSTRUCTION: When you have finished reading this page's narration verbatim, YOU MUST IMMEDIATELY CALL THE \`next_page\` TOOL to advance the screen. DO NOT CONTINUE SPEAKING OR ASK FOR QUESTIONS UNTIL YOU HAVE CALLED THE TOOL.`;
+        instruction += `\n\n[CRITICAL SYSTEM DIRECTIVE]: You are in AUTO-ADVANCE mode. As soon as you finish speaking the final word of the narration script, you MUST immediately invoke the \`next_page\` function call to advance the presentation. Do not wait for the user to tell you. Do not ask for questions. Call \`next_page\` IMMEDIATELY upon finishing the script.`;
       }
 
       // If this is the last page, append Q&A transition instruction
