@@ -485,6 +485,11 @@ export function useDemoOrchestrator() {
             }
           },
           onInterrupted: () => {
+            const s = useSession.getState();
+            // Ignore server-side interrupts during the presentation phase
+            // so we don't accidentally cut off the narration and prematurely trigger idle.
+            if (s.presentationPhase === "presentation") return;
+
             // Drain the queued AI audio (mechanical effect of an interrupt),
             // but don't surface "(interrupted)" in the transcript — with
             // auto-VAD disabled this only fires on server-initiated close,

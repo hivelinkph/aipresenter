@@ -266,7 +266,7 @@ export function WebcamRuntime({ sendFrame, sendContext }: Props) {
       />
       <canvas ref={canvasRef} className="hidden" />
       <div className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded text-sm z-20">
-        Greeting Phase
+        {useSession.getState().presentationPhase === "qa" ? "Q&A Phase" : "Greeting Phase"}
       </div>
       <div className="absolute bottom-4 right-4 z-20">
         <Button 
