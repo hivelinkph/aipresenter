@@ -174,6 +174,17 @@ export class AudioIO {
     this.nextPlayTime = this.outputCtx?.currentTime ?? 0;
   }
 
+  /** Wait until all queued AI audio has finished playing. */
+  async waitForIdle(): Promise<void> {
+    if (!this.outputCtx) return;
+    const now = this.outputCtx.currentTime;
+    const remaining = this.nextPlayTime - now;
+    if (remaining > 0) {
+      // Add a small 200ms buffer to ensure audio has fully played out
+      await new Promise((r) => setTimeout(r, remaining * 1000 + 200));
+    }
+  }
+
   async stop(): Promise<void> {
     this.drainOutput();
     if (this.analyserTimer !== null) {

@@ -443,31 +443,71 @@ export function useDemoOrchestrator() {
               lastModelTextAtRef.current = Date.now();
               appendAiChunk(text);
               
-              // Intercept the [NEXT_PAGE] directive for deterministic auto-advancing
-              if (text.includes("[NEXT_PAGE]")) {
-                const s = useSession.getState();
-                if (
-                  s.presentationMode === "pdf" &&
-                  s.presentationPhase === "presentation" &&
-                  s.state === "running"
-                ) {
-                  const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
-                  if (pdfBucket?.autoAdvance) {
-                    const total = s.totalPages;
-                    const cur = s.currentPageIndex;
-                    if (cur < total - 1) {
-                      useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance." });
-                      s.setCurrentPageIndex(cur + 1);
+              const tState = useTranscript.getState();
+              const lastEntry = tState.entries[tState.entries.length - 1];
+              if (lastEntry?.lane === "ai") {
+                const currentText = lastEntry.text;
+                let modified = false;
+                let newText = currentText;
+
+                // Intercept the [NEXT_PAGE] directive for deterministic auto-advancing
+                if (newText.includes("[NEXT_PAGE]")) {
+                  newText = newText.replace(/\[NEXT_PAGE\]/g, "");
+                  modified = true;
+                  const s = useSession.getState();
+                  if (
+                    s.presentationMode === "pdf" &&
+                    s.presentationPhase === "presentation" &&
+                    s.state === "running"
+                  ) {
+                    const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
+                    if (pdfBucket?.autoAdvance) {
+                      const total = s.totalPages;
+                      const cur = s.currentPageIndex;
+                      if (cur < total - 1) {
+                        useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance." });
+                        void (async () => {
+                          if (audioRef.current?.waitForIdle) {
+                            await audioRef.current.waitForIdle();
+                          }
+                          const currentS = useSession.getState();
+                          if (currentS.state === "running" && currentS.currentPageIndex === cur) {
+                            currentS.setCurrentPageIndex(cur + 1);
+                          }
+                        })();
+                      }
                     }
                   }
                 }
-              }
-              // Intercept the [START_QA] directive for deterministic phase transition
-              if (text.includes("[START_QA]")) {
-                const s = useSession.getState();
-                if (s.presentationPhase !== "qa") {
-                  useTranscript.getState().append({ lane: "system", text: "Presentation finished. Transitioning to Q&A." });
-                  s.setPresentationPhase("qa");
+                
+                // Intercept the [START_QA] directive for deterministic phase transition
+                if (newText.includes("[START_QA]")) {
+                  newText = newText.replace(/\[START_QA\]/g, "");
+                  modified = true;
+                  const s = useSession.getState();
+                  if (s.presentationPhase !== "qa") {
+                    useTranscript.getState().append({ lane: "system", text: "Presentation finished. Transitioning to Q&A." });
+                    void (async () => {
+                      if (audioRef.current?.waitForIdle) {
+                        await audioRef.current.waitForIdle();
+                      }
+                      const currentS = useSession.getState();
+                      if (currentS.state === "running" && currentS.presentationPhase !== "qa") {
+                        currentS.setPresentationPhase("qa");
+                      }
+                    })();
+                  }
+                }
+                
+                if (modified) {
+                  useTranscript.setState((state) => {
+                    const entries = [...state.entries];
+                    const idx = entries.length - 1;
+                    if (entries[idx].id === lastEntry.id) {
+                      entries[idx] = { ...entries[idx], text: newText.trimEnd() };
+                    }
+                    return { entries };
+                  });
                 }
               }
             } else {
@@ -872,7 +912,8 @@ export function useDemoOrchestrator() {
       const isAutoAdvance = !!pdfBucket?.autoAdvance;
 
       if (isAutoAdvance && !isLastPage) {
-        instruction += `\n\n[CRITICAL SYSTEM DIRECTIVE]: You are in AUTO-ADVANCE mode. As soon as you finish speaking the final word of the narration script, you MUST immediately output the exact keyword "[NEXT_PAGE]". You must literally say the word "[NEXT_PAGE]" as the final part of your response to advance the slide.`;
+        const afterText = narration && narration.trim().length > 0 ? "the narration script" : "your narration";
+        instruction += `\n\n[CRITICAL SYSTEM DIRECTIVE]: You are in AUTO-ADVANCE mode. As soon as you finish speaking the final word of ${afterText}, you MUST immediately output the exact keyword "[NEXT_PAGE]". You must literally say the word "[NEXT_PAGE]" as the final part of your response to advance the slide.`;
       }
 
       // If this is the last page, append Q&A transition instruction
@@ -919,7 +960,7 @@ export function useDemoOrchestrator() {
 
     if (enabled) {
       live.sendClientText(
-        `[SYSTEM: The human presenter has ENABLED auto-advance. From now on, when you've finished narrating a page, you MUST call the next_page tool to advance the viewer. Do not announce that you're advancing — just call the tool.]`
+        `[SYSTEM: The human presenter has ENABLED auto-advance. From now on, when you've finished narrating a page, you MUST output the keyword "[NEXT_PAGE]" to advance the viewer. Do not announce that you're advancing — just output the keyword.]`
       );
       useTranscript.getState().append({
         lane: "system",
@@ -927,7 +968,7 @@ export function useDemoOrchestrator() {
       });
     } else {
       live.sendClientText(
-        `[SYSTEM: The human presenter has DISABLED auto-advance. From now on, do NOT call the next_page tool. Stop speaking when you finish a page and wait for the human to advance it manually.]`
+        `[SYSTEM: The human presenter has DISABLED auto-advance. From now on, do NOT output "[NEXT_PAGE]". Stop speaking when you finish a page and wait for the human to advance it manually.]`
       );
       useTranscript.getState().append({
         lane: "system",
@@ -1042,8 +1083,8 @@ function buildPdfSystemPrompt(
   presenterName: string = "",
 ): string {
   const pageEndingInstruction = autoAdvance
-    ? `When you've finished narrating a page (and answered any pending questions), you MUST call the next_page tool to advance the viewer for the audience. Do not announce that you're advancing or say "next page" aloud — just call the tool. This is mandatory. If you're on the last page, do NOT call next_page; instead invite questions and stay silent.`
-    : `When you've finished narrating a page, stop speaking and stay silent. Do NOT call next_page — the human presenter advances the viewer manually. After every page, invite questions briefly (in the demo language).`;
+    ? `When you've finished narrating a page, you MUST output the exact keyword "[NEXT_PAGE]" to advance the viewer. Do NOT call the next_page tool for this. If you're on the last page, do NOT say "[NEXT_PAGE]"; instead invite questions and stay silent.`
+    : `When you've finished narrating a page, stop speaking and stay silent. Do NOT advance the viewer. After every page, invite questions briefly (in the demo language).`;
   const kbBlock = formatKbBlock(kbSnapshot);
   const nameBlock = formatPresenterNameBlock(presenterName);
   return [
