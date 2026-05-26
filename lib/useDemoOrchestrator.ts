@@ -916,7 +916,7 @@ export function useDemoOrchestrator() {
 
       const session = useSession.getState();
       const pdfBucket = session.sources.pdfs as { autoAdvance?: boolean } | undefined;
-      const isAutoAdvance = !!pdfBucket?.autoAdvance;
+      const isAutoAdvance = pdfBucket?.autoAdvance !== false; // Default to true
 
       if (isAutoAdvance && !isLastPage) {
         const afterText = narration && narration.trim().length > 0 ? "the narration script" : "your narration";

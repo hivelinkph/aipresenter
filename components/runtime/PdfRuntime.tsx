@@ -67,7 +67,8 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, re
   const pageNarrations = pdfBucket.pageNarrations ?? [];
   const qaTransition = pdfBucket.qaTransition ?? "";
   const presenterName = pdfBucket.presenterName ?? "";
-  const autoAdvance = !!pdfBucket.autoAdvance;
+  // Default to true if not explicitly set to false
+  const autoAdvance = (sources.pdfs as { autoAdvance?: boolean })?.autoAdvance !== false;
 
   // Resolve {presenterName} placeholder in Q&A transition
   const resolvedQaTransition = qaTransition.replace(
@@ -232,81 +233,83 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, re
   return (
     <>
       {/* Inline preview (visible when modal is closed) */}
-      <div className={`space-y-3 ${showModal ? "hidden" : ""}`}>
-        {files.length > 1 && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">Presenting:</span>
-            <select
-              value={activePdfFileId ?? ""}
-              onChange={(e) => {
-                setActivePdfFileId(e.target.value);
-                setCurrentPageIndex(0);
-              }}
-              disabled={isLive}
-              className="flex h-8 rounded-md border border-input bg-background px-2 text-xs"
-            >
-              {files.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.filename}
-                </option>
-              ))}
-            </select>
+      {!showModal && (
+        <div className="space-y-3">
+          {files.length > 1 && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Presenting:</span>
+              <select
+                value={activePdfFileId ?? ""}
+                onChange={(e) => {
+                  setActivePdfFileId(e.target.value);
+                  setCurrentPageIndex(0);
+                }}
+                disabled={isLive}
+                className="flex h-8 rounded-md border border-input bg-background px-2 text-xs"
+              >
+                {files.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.filename}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {pdfUrl && totalPages > 0 && !isLive && (
+            <PdfThumbnails
+              pdfUrl={pdfUrl}
+              totalPages={totalPages}
+              currentPageIndex={currentPageIndex}
+              onJump={(i) => setCurrentPageIndex(i)}
+            />
+          )}
+
+          <div className="rounded-md border bg-card flex justify-center overflow-auto max-h-[70vh]">
+            {pdfDoc({
+              width: Math.min(
+                900,
+                typeof window !== "undefined" ? window.innerWidth - 80 : 900,
+              ),
+            })}
           </div>
-        )}
 
-        {pdfUrl && totalPages > 0 && !isLive && (
-          <PdfThumbnails
-            pdfUrl={pdfUrl}
-            totalPages={totalPages}
-            currentPageIndex={currentPageIndex}
-            onJump={(i) => setCurrentPageIndex(i)}
-          />
-        )}
+          {loadError && (
+            <div className="text-sm text-destructive">{loadError}</div>
+          )}
 
-        <div className="rounded-md border bg-card flex justify-center overflow-auto max-h-[70vh]">
-          {pdfDoc({
-            width: Math.min(
-              900,
-              typeof window !== "undefined" ? window.innerWidth - 80 : 900,
-            ),
-          })}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="text-xs text-muted-foreground font-mono">
+              Page {totalPages > 0 ? currentPageIndex + 1 : 0} / {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowModal(true)}
+              >
+                <Maximize className="h-4 w-4" /> Present
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goPrev}
+                disabled={currentPageIndex <= 0}
+              >
+                <ChevronLeft className="h-4 w-4" /> Prev
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={goNext}
+                disabled={totalPages === 0 || currentPageIndex >= totalPages - 1}
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-
-        {loadError && (
-          <div className="text-sm text-destructive">{loadError}</div>
-        )}
-
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-xs text-muted-foreground font-mono">
-            Page {totalPages > 0 ? currentPageIndex + 1 : 0} / {totalPages}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowModal(true)}
-            >
-              <Maximize className="h-4 w-4" /> Present
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goPrev}
-              disabled={currentPageIndex <= 0}
-            >
-              <ChevronLeft className="h-4 w-4" /> Prev
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={goNext}
-              disabled={totalPages === 0 || currentPageIndex >= totalPages - 1}
-            >
-              Next <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Full-screen modal overlay */}
       {showModal && (
