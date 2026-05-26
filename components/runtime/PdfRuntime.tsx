@@ -254,7 +254,7 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, re
           </div>
         )}
 
-        {pdfUrl && totalPages > 0 && (
+        {pdfUrl && totalPages > 0 && !isLive && (
           <PdfThumbnails
             pdfUrl={pdfUrl}
             totalPages={totalPages}

@@ -176,13 +176,13 @@ export class AudioIO {
 
   /** Wait until all queued AI audio has finished playing. */
   async waitForIdle(): Promise<void> {
-    if (!this.outputCtx) return;
-    const now = this.outputCtx.currentTime;
-    const remaining = this.nextPlayTime - now;
-    if (remaining > 0) {
-      // Add a small 200ms buffer to ensure audio has fully played out
-      await new Promise((r) => setTimeout(r, remaining * 1000 + 200));
+    // Poll every 100ms until all scheduled audio sources have finished playing.
+    // The onended callback on each source will remove it from the array.
+    while (this.scheduledSources.length > 0) {
+      await new Promise((r) => setTimeout(r, 100));
     }
+    // Add a tiny buffer after the last source finishes
+    await new Promise((r) => setTimeout(r, 200));
   }
 
   async stop(): Promise<void> {
