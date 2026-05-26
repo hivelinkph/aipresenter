@@ -42,6 +42,8 @@ export function useDemoOrchestrator() {
   const ragCacheRef = useRef<
     Array<{ query: string; chunks: Array<{ text: string }> }>
   >([]);
+  const autoAdvancePendingRef = useRef(false);
+  const qaTransitionPendingRef = useRef(false);
   const [micLevel, setMicLevel] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
 
@@ -454,49 +456,16 @@ export function useDemoOrchestrator() {
                 if (newText.includes("[NEXT_PAGE]")) {
                   newText = newText.replace(/\[NEXT_PAGE\]/g, "");
                   modified = true;
-                  const s = useSession.getState();
-                  if (
-                    s.presentationMode === "pdf" &&
-                    s.presentationPhase === "presentation" &&
-                    s.state === "running"
-                  ) {
-                    const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
-                    if (pdfBucket?.autoAdvance) {
-                      const total = s.totalPages;
-                      const cur = s.currentPageIndex;
-                      if (cur < total - 1) {
-                        useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance." });
-                        void (async () => {
-                          if (audioRef.current?.waitForIdle) {
-                            await audioRef.current.waitForIdle();
-                          }
-                          const currentS = useSession.getState();
-                          if (currentS.state === "running" && currentS.currentPageIndex === cur) {
-                            currentS.setCurrentPageIndex(cur + 1);
-                          }
-                        })();
-                      }
-                    }
-                  }
+                  autoAdvancePendingRef.current = true;
+                  useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance (queued)." });
                 }
                 
                 // Intercept the [START_QA] directive for deterministic phase transition
                 if (newText.includes("[START_QA]")) {
                   newText = newText.replace(/\[START_QA\]/g, "");
                   modified = true;
-                  const s = useSession.getState();
-                  if (s.presentationPhase !== "qa") {
-                    useTranscript.getState().append({ lane: "system", text: "Presentation finished. Transitioning to Q&A." });
-                    void (async () => {
-                      if (audioRef.current?.waitForIdle) {
-                        await audioRef.current.waitForIdle();
-                      }
-                      const currentS = useSession.getState();
-                      if (currentS.state === "running" && currentS.presentationPhase !== "qa") {
-                        currentS.setPresentationPhase("qa");
-                      }
-                    })();
-                  }
+                  qaTransitionPendingRef.current = true;
+                  useTranscript.getState().append({ lane: "system", text: "Presentation finished. Transitioning to Q&A (queued)." });
                 }
                 
                 if (modified) {
@@ -523,9 +492,47 @@ export function useDemoOrchestrator() {
             audioRef.current?.drainOutput();
           },
           onTurnComplete: () => {
-            // We previously had auto-advance logic here, but it fired on EVERY turn completion
-            // including VAD interruptions and answers to user questions, causing skipping.
-            // We must rely on the AI calling the `next_page` tool explicitly instead.
+            if (autoAdvancePendingRef.current) {
+              autoAdvancePendingRef.current = false;
+              const s = useSession.getState();
+              if (
+                s.presentationMode === "pdf" &&
+                s.presentationPhase === "presentation" &&
+                s.state === "running"
+              ) {
+                const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
+                if (pdfBucket?.autoAdvance) {
+                  const total = s.totalPages;
+                  const cur = s.currentPageIndex;
+                  if (cur < total - 1) {
+                    void (async () => {
+                      if (audioRef.current?.waitForIdle) {
+                        await audioRef.current.waitForIdle();
+                      }
+                      const currentS = useSession.getState();
+                      if (currentS.state === "running" && currentS.currentPageIndex === cur) {
+                        currentS.setCurrentPageIndex(cur + 1);
+                      }
+                    })();
+                  }
+                }
+              }
+            }
+            if (qaTransitionPendingRef.current) {
+              qaTransitionPendingRef.current = false;
+              const s = useSession.getState();
+              if (s.presentationPhase !== "qa") {
+                void (async () => {
+                  if (audioRef.current?.waitForIdle) {
+                    await audioRef.current.waitForIdle();
+                  }
+                  const currentS = useSession.getState();
+                  if (currentS.state === "running" && currentS.presentationPhase !== "qa") {
+                    currentS.setPresentationPhase("qa");
+                  }
+                })();
+              }
+            }
           },
           onToolCall: handleToolCall,
           onClose: (code, reason) => {

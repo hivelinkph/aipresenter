@@ -232,7 +232,7 @@ export function PdfRuntime({ pushPdfPage, micMuted = false, toggleMic, pause, re
   return (
     <>
       {/* Inline preview (visible when modal is closed) */}
-      <div className="space-y-3">
+      <div className={`space-y-3 ${showModal ? "hidden" : ""}`}>
         {files.length > 1 && (
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">Presenting:</span>
