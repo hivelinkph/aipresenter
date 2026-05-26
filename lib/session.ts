@@ -20,7 +20,7 @@ export type DemoLanguage = "English" | "Tagalog" | "Bisaya";
  */
 export type PresentationMode = "website" | "pdf";
 
-export type PresentationPhase = "greeting" | "presentation";
+export type PresentationPhase = "greeting" | "presentation" | "qa";
 
 interface ConnectionStatus {
   gemini: "disconnected" | "connecting" | "connected" | "error";

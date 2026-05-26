@@ -442,6 +442,34 @@ export function useDemoOrchestrator() {
             if (role === "model") {
               lastModelTextAtRef.current = Date.now();
               appendAiChunk(text);
+              
+              // Intercept the [NEXT_PAGE] directive for deterministic auto-advancing
+              if (text.includes("[NEXT_PAGE]")) {
+                const s = useSession.getState();
+                if (
+                  s.presentationMode === "pdf" &&
+                  s.presentationPhase === "presentation" &&
+                  s.state === "running"
+                ) {
+                  const pdfBucket = s.sources.pdfs as { autoAdvance?: boolean } | undefined;
+                  if (pdfBucket?.autoAdvance) {
+                    const total = s.totalPages;
+                    const cur = s.currentPageIndex;
+                    if (cur < total - 1) {
+                      useTranscript.getState().append({ lane: "system", text: "AI triggered auto-advance." });
+                      s.setCurrentPageIndex(cur + 1);
+                    }
+                  }
+                }
+              }
+              // Intercept the [START_QA] directive for deterministic phase transition
+              if (text.includes("[START_QA]")) {
+                const s = useSession.getState();
+                if (s.presentationPhase !== "qa") {
+                  useTranscript.getState().append({ lane: "system", text: "Presentation finished. Transitioning to Q&A." });
+                  s.setPresentationPhase("qa");
+                }
+              }
             } else {
               useTranscript.getState().append({ lane: "human", text });
               onUserTranscriptFragment(text);
@@ -524,17 +552,14 @@ export function useDemoOrchestrator() {
           );
         } else {
           if (sess.presentationMode === "pdf") {
-            // PDF mode — first [PAGE …] turn is sent by PdfRuntime once the
-            // viewer has loaded the document. Tell the AI to start right away
-            // when it receives the page cue, without a long preamble.
             const hasName = !!settings.presenterName?.trim();
-            const introClause = hasName
-              ? `When the first [PAGE …] message arrives, briefly introduce yourself by name in one short sentence, then begin narrating the page immediately.`
-              : `Do NOT greet the audience or introduce yourself — wait silently for the first [PAGE …] message, then begin narrating immediately.`;
+            const intro = hasName ? `Hello, my name is ${settings.presenterName}. ` : "";
             live.sendClientText(
-              `You are now live presenting a PDF document to an audience. ` +
-                `${introClause} ` +
-                `If the page includes a NARRATION SCRIPT, read it verbatim.`,
+              `[SYSTEM DIRECTIVE]: You are now live. We are currently in the GREETING phase. \n\n` +
+              `INSTRUCTIONS:\n` +
+              `1. Look at the camera and greet the audience naturally. ${intro}\n` +
+              `2. If you see people, ask for their names and use the \`register_audience_member\` tool to remember them.\n` +
+              `3. Once you have greeted the audience and are ready to begin the presentation, you MUST call the \`start_presentation\` tool. Do not wait for the audience to tell you to start.`
             );
             return;
           }
@@ -847,15 +872,15 @@ export function useDemoOrchestrator() {
       const isAutoAdvance = !!pdfBucket?.autoAdvance;
 
       if (isAutoAdvance && !isLastPage) {
-        instruction += `\n\n[CRITICAL SYSTEM DIRECTIVE]: You are in AUTO-ADVANCE mode. As soon as you finish speaking the final word of the narration script, you MUST immediately invoke the \`next_page\` function call to advance the presentation. Do not wait for the user to tell you. Do not ask for questions. Call \`next_page\` IMMEDIATELY upon finishing the script.`;
+        instruction += `\n\n[CRITICAL SYSTEM DIRECTIVE]: You are in AUTO-ADVANCE mode. As soon as you finish speaking the final word of the narration script, you MUST immediately output the exact keyword "[NEXT_PAGE]". You must literally say the word "[NEXT_PAGE]" as the final part of your response to advance the slide.`;
       }
 
       // If this is the last page, append Q&A transition instruction
-      if (isLastPage && qaTransition && qaTransition.trim().length > 0) {
+      if (isLastPage) {
         instruction +=
           `\n\nIMPORTANT: After you finish narrating this page, read the following Q&A transition VERBATIM:\n` +
-          `"${qaTransition.trim()}"` +
-          `\nThen stay silent and wait for audience questions.`;
+          `"${qaTransition?.trim() || "That concludes the presentation. I will now take any questions you have."}"` +
+          `\n\n[CRITICAL SYSTEM DIRECTIVE]: After saying the transition, you MUST immediately output the exact keyword "[START_QA]" as the absolute final part of your response. This is required to turn the webcam back on for the Q&A portion.`;
       }
 
       live.sendClientText(instruction);

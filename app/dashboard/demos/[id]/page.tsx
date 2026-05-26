@@ -297,7 +297,7 @@ export default function DemoRunner() {
             </div>
           </div>
           {presentationMode === "pdf" && (
-            presentationPhase === "greeting" ? (
+            (presentationPhase === "greeting" || presentationPhase === "qa") ? (
               <WebcamRuntime sendFrame={sendFrame} sendContext={sendContext} />
             ) : (
               <PdfRuntime 
